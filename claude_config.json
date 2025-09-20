@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "voice-file-controller": {
-      "command": "/Users/antoninodin/voice-file-controller/voice-env/bin/python",
-      "args": ["/Users/antoninodin/voice-file-controller/mcp_server.py"],
-      "cwd": "/Users/antoninodin/voice-file-controller",
+    "mcp-file-controller": {
+      "command": "python3",
+      "args": ["mcp_server.py"],
+      "cwd": "/Users/lovisodin/Documents/GitHub/mcp-producer",
       "env": {
-        "PYTHONPATH": "/Users/antoninodin/voice-file-controller"
+        "PYTHONPATH": "/Users/lovisodin/Documents/GitHub/mcp-producer"
       }
     }
   }

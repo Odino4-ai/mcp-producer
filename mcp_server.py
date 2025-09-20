@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Serveur MCP pour la gestion de fichiers par voix
-Implémente des outils pour créer des dossiers, fichiers et lister le contenu
+MCP Server for File Management
+Implements tools to create folders, files and list directory contents
 """
 
 import json

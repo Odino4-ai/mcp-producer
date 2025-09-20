@@ -1,1 +1,5 @@
+# MCP Server Dependencies
+mcp>=1.0.0
 
+# Standard library dependencies (already included in Python)
+# pathlib, json, os, sys, datetime, asyncio are built-in
