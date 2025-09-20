@@ -17,6 +17,8 @@ interface BottomToolbarProps {
   onCodecChange: (newCodec: string) => void;
   isTranscriptVisible: boolean;
   setIsTranscriptVisible: (val: boolean) => void;
+  isAgentVisualizerVisible: boolean;
+  setIsAgentVisualizerVisible: (val: boolean) => void;
 }
 
 function BottomToolbar({
@@ -35,6 +37,8 @@ function BottomToolbar({
   onCodecChange,
   isTranscriptVisible,
   setIsTranscriptVisible,
+  isAgentVisualizerVisible,
+  setIsAgentVisualizerVisible,
 }: BottomToolbarProps) {
   const isConnected = sessionStatus === "CONNECTED";
   const isConnecting = sessionStatus === "CONNECTING";
@@ -142,6 +146,18 @@ function BottomToolbar({
         />
         <label htmlFor="transcript" className="flex items-center cursor-pointer">
           Transcript
+        </label>
+      </div>
+      <div className="flex flex-row items-center gap-2">
+        <input
+          id="agent-visualizer"
+          type="checkbox"
+          checked={isAgentVisualizerVisible}
+          onChange={(e) => setIsAgentVisualizerVisible(e.target.checked)}
+          className="w-4 h-4"
+        />
+        <label htmlFor="agent-visualizer" className="flex items-center cursor-pointer">
+          🔍 Agent Monitor
         </label>
       </div>
 
