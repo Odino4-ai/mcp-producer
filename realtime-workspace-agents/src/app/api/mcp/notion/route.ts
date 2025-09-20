@@ -17,71 +17,239 @@ interface MCPResponse {
   databasesCreated?: number;
 }
 
-// Simuler une connexion MCP Notion (remplacer par vraie connexion)
+// Configuration Notion
+const DEFAULT_NOTION_PAGE_ID = "274a860b701080368183ce1111e68d65"; // Page Notion par défaut à modifier
+
+// Fonction pour normaliser l'ID de page Notion
+function normalizeNotionPageId(pageId: string): string {
+  // Supprimer les tirets et reformater si nécessaire
+  const cleanId = pageId.replace(/-/g, '');
+  // Reformater avec tirets au bon endroit : 8-4-4-4-12
+  if (cleanId.length === 32) {
+    return `${cleanId.slice(0,8)}-${cleanId.slice(8,12)}-${cleanId.slice(12,16)}-${cleanId.slice(16,20)}-${cleanId.slice(20,32)}`;
+  }
+  return pageId;
+}
+const NOTION_API_URL = "https://api.notion.com/v1";
+const NOTION_VERSION = "2022-06-28";
+
+// Client MCP Notion avec vraie intégration API
 class NotionMCPClient {
+  
+  private async callNotionAPI(endpoint: string, method: string = 'GET', data?: any) {
+    const notionToken = process.env.NOTION_TOKEN;
+    
+    if (!notionToken) {
+      throw new Error('NOTION_TOKEN not configured');
+    }
+    
+    const response = await fetch(`${NOTION_API_URL}${endpoint}`, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${notionToken}`,
+        'Notion-Version': NOTION_VERSION,
+        'Content-Type': 'application/json',
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Notion API error: ${response.status} - ${JSON.stringify(error)}`);
+    }
+    
+    return response.json();
+  }
   
   async createNotionProject(args: any): Promise<MCPResponse> {
     const { projectName, projectDescription, projectType, teamMembers, initialContext } = args;
     
     try {
-      // 🔧 ICI : Appel réel au serveur MCP Notion
-      // Pour l'instant, on simule une réponse réussie
+      // 🔧 Appel réel à l'API Notion pour créer le projet
       
       const projectId = `notion_${Date.now()}`;
-      const pageId = `page_${Date.now()}`;
+      const rawPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+      const pageId = normalizeNotionPageId(rawPageId); // Normalise l'ID de page
       
-      // Structure complète créée
-      const projectStructure = {
-        projectId,
-        pageId,
-        projectName,
-        projectDescription,
-        projectType: projectType || 'business',
-        teamMembers: teamMembers || [],
-        createdAt: new Date().toISOString(),
-        
-        // Pages principales créées
-        pages: {
-          mainHub: `📋 ${projectName} - Main Hub`,
-          planning: `📋 ${projectName} - Planning`,
-          documentation: `📝 ${projectName} - Documentation`,
-          development: `🔧 ${projectName} - Development`,
-          testing: `🧪 ${projectName} - Testing`,
-          reports: `📊 ${projectName} - Reports`
+      // Créer le contenu du projet à ajouter à la page
+      const projectContent = [
+        {
+          "object": "block",
+          "type": "heading_1",
+          "heading_1": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `🚀 ${projectName}`
+                },
+                "annotations": {
+                  "bold": true,
+                  "color": "blue"
+                }
+              }
+            ]
+          }
         },
-        
-        // Bases de données créées
-        databases: {
-          tasks: {
-            id: `db_tasks_${Date.now()}`,
-            name: `${projectName} - Tasks`,
-            url: `https://notion.so/tasks-${Date.now()}`
-          },
-          meetings: {
-            id: `db_meetings_${Date.now()}`,
-            name: `${projectName} - Meetings`,
-            url: `https://notion.so/meetings-${Date.now()}`
-          },
-          resources: {
-            id: `db_resources_${Date.now()}`,
-            name: `${projectName} - Resources`,
-            url: `https://notion.so/resources-${Date.now()}`
+        {
+          "object": "block",
+          "type": "paragraph",
+          "paragraph": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `📝 Description: ${projectDescription}`
+                }
+              }
+            ]
+          }
+        },
+        {
+          "object": "block",
+          "type": "paragraph",
+          "paragraph": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `🎯 Type: ${projectType || 'business'}`
+                }
+              }
+            ]
           }
         }
-      };
+      ];
       
-      console.log('🎯 MCP API - Notion Project Created:', {
+      // Ajouter l'équipe si spécifiée
+      if (teamMembers && teamMembers.length > 0) {
+        projectContent.push({
+          "object": "block",
+          "type": "heading_3",
+          "heading_3": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "👥 Équipe"
+                }
+              }
+            ]
+          }
+        });
+        
+        teamMembers.forEach((member: string) => {
+          projectContent.push({
+            "object": "block",
+            "type": "bulleted_list_item",
+            "bulleted_list_item": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": member
+                  }
+                }
+              ]
+            }
+          });
+        });
+      }
+      
+      // Ajouter des sections de base
+      projectContent.push(
+        {
+          "object": "block",
+          "type": "heading_3",
+          "heading_3": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "📋 Tâches"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "object": "block",
+          "type": "to_do",
+          "to_do": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Planifier le projet"
+                }
+              }
+            ],
+            "checked": false
+          }
+        },
+        {
+          "object": "block",
+          "type": "to_do",
+          "to_do": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": "Définir les objectifs"
+                }
+              }
+            ],
+            "checked": false
+          }
+        }
+      );
+      
+      // Ajouter le contexte initial si fourni
+      if (initialContext) {
+        projectContent.push({
+          "object": "block",
+          "type": "callout",
+          "callout": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `💡 Contexte initial: ${initialContext}`
+                }
+              }
+            ],
+            "icon": {
+              "emoji": "💡"
+            }
+          }
+        });
+      }
+      
+      // Ajouter le contenu à la page Notion
+      await this.callNotionAPI(`/blocks/${pageId}/children`, 'PATCH', {
+        children: projectContent
+      });
+      
+      console.log('🎯 MCP API - Notion Project REALLY Created:', {
         projectId,
         projectName,
-        databasesCreated: Object.keys(projectStructure.databases).length,
-        pagesCreated: Object.keys(projectStructure.pages).length
+        targetNotionPageId: pageId,
+        blocksCreated: projectContent.length,
+        teamMembers: teamMembers?.length || 0
       });
       
       return {
         success: true,
         pageId,
-        databasesCreated: Object.keys(projectStructure.databases).length,
-        data: projectStructure
+        databasesCreated: 0, // Pas de databases créées, juste du contenu ajouté
+        data: {
+          projectId,
+          projectName,
+          targetPageId: pageId,
+          blocksCreated: projectContent.length,
+          notionUrl: `https://notion.so/${pageId.replace(/-/g, '')}`,
+          timestamp: new Date().toISOString()
+        }
       };
       
     } catch (error) {
@@ -95,29 +263,115 @@ class NotionMCPClient {
   
   async updateNotionTasks(args: any): Promise<MCPResponse> {
     const { projectId, newTasks, updatedTasks, conversationContext } = args;
+    const rawTargetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    const targetPageId = normalizeNotionPageId(rawTargetPageId);
     
     try {
-      // 🔧 ICI : Appel réel au serveur MCP pour mettre à jour les tâches
+      // 🔧 Appel réel à l'API Notion pour modifier la page
+      
+      // 1. Récupérer le contenu actuel de la page
+      const currentPage = await this.callNotionAPI(`/pages/${targetPageId}`);
+      
+      // 2. Récupérer les blocs de contenu actuels
+      const currentBlocks = await this.callNotionAPI(`/blocks/${targetPageId}/children`);
+      
+      // 3. Créer le nouveau contenu à ajouter
+      const newContent = [];
+      
+      // Ajouter un header pour les nouvelles tâches
+      if (newTasks && newTasks.length > 0) {
+        newContent.push({
+          "object": "block",
+          "type": "heading_2",
+          "heading_2": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `🔄 Mise à jour - ${new Date().toLocaleDateString()}`
+                }
+              }
+            ]
+          }
+        });
+        
+        // Ajouter le contexte de conversation
+        if (conversationContext) {
+          newContent.push({
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": `💬 Contexte: ${conversationContext}`
+                  }
+                }
+              ]
+            }
+          });
+        }
+        
+        // Ajouter chaque nouvelle tâche
+        newTasks.forEach((task: any) => {
+          newContent.push({
+            "object": "block",
+            "type": "to_do",
+            "to_do": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": task.task || task.title || 'Nouvelle tâche'
+                  }
+                }
+              ],
+              "checked": false
+            }
+          });
+          
+          // Ajouter les détails de la tâche si disponibles
+          if (task.assignedTo || task.priority) {
+            const details = [];
+            if (task.assignedTo) details.push(`👤 ${task.assignedTo}`);
+            if (task.priority) details.push(`⚡ ${task.priority}`);
+            
+            newContent.push({
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": `   ${details.join(' • ')}`
+                    }
+                  }
+                ]
+              }
+            });
+          }
+        });
+      }
+      
+      // 4. Ajouter le nouveau contenu à la page Notion
+      if (newContent.length > 0) {
+        await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+          children: newContent
+        });
+      }
       
       const tasksAdded = newTasks?.length || 0;
       const tasksUpdated = updatedTasks?.length || 0;
       
-      // Simulation de mise à jour des tâches
-      const updatedTasksData = newTasks?.map((task: any, index: number) => ({
-        id: `task_${Date.now()}_${index}`,
-        title: task.task || task.title || 'New Task',
-        assignedTo: task.assignedTo || 'Unassigned',
-        priority: task.priority || 'Medium',
-        status: 'To Do',
-        createdAt: new Date().toISOString(),
-        notionUrl: `https://notion.so/task-${Date.now()}-${index}`
-      })) || [];
-      
-      console.log('📋 MCP API - Notion Tasks Updated:', {
+      console.log('📋 MCP API - Notion Page REALLY Updated:', {
         projectId,
+        targetNotionPageId: targetPageId,
         tasksAdded,
         tasksUpdated,
-        context: conversationContext
+        context: conversationContext,
+        blocksAdded: newContent.length
       });
       
       return {
@@ -126,8 +380,10 @@ class NotionMCPClient {
         tasksUpdated,
         data: {
           projectId,
-          newTasks: updatedTasksData,
-          timestamp: new Date().toISOString()
+          targetPageId,
+          blocksAdded: newContent.length,
+          timestamp: new Date().toISOString(),
+          notionUrl: `https://notion.so/${targetPageId.replace(/-/g, '')}`
         }
       };
       
@@ -142,6 +398,7 @@ class NotionMCPClient {
   
   async enrichNotionContent(args: any): Promise<MCPResponse> {
     const { projectId, enrichmentType, content, conversationTrigger } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
     
     try {
       // 🔧 ICI : Appel réel au serveur MCP pour enrichir le contenu
@@ -151,6 +408,7 @@ class NotionMCPClient {
       console.log('⚡ MCP API - Notion Content Enriched:', {
         enrichmentId,
         projectId,
+        targetNotionPageId: targetPageId,
         type: enrichmentType,
         trigger: conversationTrigger
       });
@@ -225,15 +483,68 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handler GET pour vérifier le statut
-export async function GET() {
+// Handler GET pour vérifier le statut et tester l'accès Notion
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const testAccess = searchParams.get('testAccess');
+  
+  if (testAccess === 'true') {
+    // Test d'accès à la page Notion
+    try {
+      const mcpClient = new NotionMCPClient();
+      const pageId = normalizeNotionPageId(DEFAULT_NOTION_PAGE_ID);
+      
+      const pageInfo = await mcpClient.callNotionAPI(`/pages/${pageId}`);
+      
+      return NextResponse.json({
+        status: 'MCP Notion API is running',
+        timestamp: new Date().toISOString(),
+        defaultNotionPageId: DEFAULT_NOTION_PAGE_ID,
+        normalizedPageId: pageId,
+        notionAccess: 'SUCCESS',
+        pageTitle: pageInfo.properties?.title?.title?.[0]?.text?.content || 'No title',
+        availableTools: [
+          'createNotionProject',
+          'updateNotionTasks', 
+          'enrichNotionContent'
+        ],
+        note: 'Notion page access verified successfully!'
+      });
+      
+    } catch (error: any) {
+      return NextResponse.json({
+        status: 'MCP Notion API is running',
+        timestamp: new Date().toISOString(),
+        defaultNotionPageId: DEFAULT_NOTION_PAGE_ID,
+        normalizedPageId: normalizeNotionPageId(DEFAULT_NOTION_PAGE_ID),
+        notionAccess: 'ERROR',
+        error: error.message,
+        availableTools: [
+          'createNotionProject',
+          'updateNotionTasks', 
+          'enrichNotionContent'
+        ],
+        note: 'API running but Notion access failed. Check page sharing and token.',
+        troubleshooting: {
+          step1: 'Make sure your Notion integration has access to the page',
+          step2: 'Share the page with your integration in Notion',
+          step3: 'Verify NOTION_TOKEN is correct'
+        }
+      });
+    }
+  }
+  
   return NextResponse.json({
     status: 'MCP Notion API is running',
     timestamp: new Date().toISOString(),
+    defaultNotionPageId: DEFAULT_NOTION_PAGE_ID,
+    normalizedPageId: normalizeNotionPageId(DEFAULT_NOTION_PAGE_ID),
     availableTools: [
       'createNotionProject',
       'updateNotionTasks', 
       'enrichNotionContent'
-    ]
+    ],
+    note: 'All operations will target the specified Notion page by default',
+    testUrl: '?testAccess=true to test Notion page access'
   });
 }

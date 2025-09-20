@@ -86,7 +86,7 @@ export const notionExpertAgent = new RealtimeAgent({
         const { projectName, projectDescription, projectType, teamMembers, initialContext } = input;
         
         try {
-          // Call actual Notion MCP server to create project
+          // Call MCP server via OpenAI Agents SDK or direct API
           const mcpResponse = await fetch('/api/mcp/notion', {
             method: 'POST',
             headers: {
@@ -99,7 +99,8 @@ export const notionExpertAgent = new RealtimeAgent({
                 projectDescription,
                 projectType: projectType || 'business',
                 teamMembers: teamMembers || [],
-                initialContext: initialContext || ''
+                initialContext: initialContext || '',
+                targetPageId: '274a860b701080368183ce1111e68d65' // Votre page Notion spécifique
               }
             })
           });
@@ -221,7 +222,8 @@ export const notionExpertAgent = new RealtimeAgent({
                 projectId,
                 newTasks: newTasks || [],
                 updatedTasks: updatedTasks || [],
-                conversationContext: conversationContext || ''
+                conversationContext: conversationContext || '',
+                targetPageId: '274a860b701080368183ce1111e68d65' // Votre page Notion spécifique
               }
             })
           });
@@ -327,7 +329,8 @@ export const notionExpertAgent = new RealtimeAgent({
                 projectId,
                 enrichmentType,
                 content,
-                conversationTrigger: conversationTrigger || ''
+                conversationTrigger: conversationTrigger || '',
+                targetPageId: '274a860b701080368183ce1111e68d65' // Votre page Notion spécifique
               }
             })
           });

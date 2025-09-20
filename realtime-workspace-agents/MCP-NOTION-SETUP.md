@@ -40,24 +40,33 @@ graph TD
 
 ## 🔧 Installation et Configuration
 
-### 1. **Dépendances Python** (optionnel)
+### 1. **Dépendances Python** (REQUIS pour OpenAI SDK)
 ```bash
-# Si vous voulez utiliser le serveur MCP Python
-pip3 install mcp requests
+# Installation automatique
+./install-openai-mcp.sh
+
+# Ou installation manuelle
+pip3 install openai-agents mcp requests
 ```
 
-### 2. **Token Notion** (optionnel)
+### 2. **Variables d'environnement** (REQUIS)
 ```bash
-# Pour l'intégration Notion réelle
+# Clé API OpenAI (OBLIGATOIRE)
+export OPENAI_API_KEY="your_openai_api_key"
+
+# Token Notion (pour intégration réelle)
 export NOTION_TOKEN="your_notion_integration_token"
 ```
 
 ### 3. **Démarrage**
 ```bash
-# L'API MCP est déjà intégrée dans Next.js
+# Option 1: API MCP intégrée Next.js (Recommandé)
 npm run dev
 
-# Optionnel: Serveur MCP Python standalone
+# Option 2: OpenAI Agents SDK + MCP (Nouveau!)
+python3 openai-mcp-integration.py
+
+# Option 3: Serveur MCP Python standalone
 ./start-mcp-notion.sh
 ```
 
