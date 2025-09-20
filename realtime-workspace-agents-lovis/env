@@ -1,0 +1,6 @@
+# OpenAI API Key for Realtime API
+# Get your API key from: https://platform.openai.com/account/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Note: Replace 'your_openai_api_key_here' with your actual OpenAI API key
+# The key should start with 'sk-'
