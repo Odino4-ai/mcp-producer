@@ -1,9 +1,9 @@
-import { multiAgentTaskScenario } from './multiAgentTaskSystem';
+import { realEstateBrokerScenario } from './realEstateBroker';
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
-// Map of scenario key -> array of RealtimeAgent objects (single Notion Expert agent)
+// Map of scenario key -> array of RealtimeAgent objects (single scenario after refactor)
 export const allAgentSets: Record<string, RealtimeAgent[]> = {
-  multiAgentTaskManagement: multiAgentTaskScenario, // Contains the single Notion Expert agent
+  realEstateBroker: realEstateBrokerScenario,
 };
 
-export const defaultAgentSetKey = 'multiAgentTaskManagement';
+export const defaultAgentSetKey = 'realEstateBroker';
