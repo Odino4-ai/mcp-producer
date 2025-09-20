@@ -7,7 +7,7 @@ import Image from "next/image";
 
 // UI components
 import Transcript from "./components/Transcript";
-import Events from "./components/Events";
+import NotionEmbed from "./components/NotionEmbed";
 import BottomToolbar from "./components/BottomToolbar";
 // Removed Workspace import (no longer used)
 
@@ -475,7 +475,7 @@ function App() {
           canSend={sessionStatus === "CONNECTED"}
           isVisible={isTranscriptVisible}
         />
-        <Events isExpanded={isEventsPaneExpanded} />
+        <NotionEmbed isExpanded={isEventsPaneExpanded} />
       </div>
 
       <BottomToolbar
