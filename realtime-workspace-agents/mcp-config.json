@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "notion-integration": {
+      "command": "python3",
+      "args": ["mcp-notion-server.py"],
+      "cwd": "/Users/lovisodin/Documents/GitHub/mcp-producer/realtime-workspace-agents",
+      "env": {
+        "PYTHONPATH": "/Users/lovisodin/Documents/GitHub/mcp-producer/realtime-workspace-agents",
+        "NOTION_TOKEN": "${NOTION_TOKEN}"
+      }
+    }
+  }
+}

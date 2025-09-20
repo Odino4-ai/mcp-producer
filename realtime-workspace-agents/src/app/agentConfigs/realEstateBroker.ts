@@ -1,259 +1,403 @@
 import { RealtimeAgent, tool } from '@openai/agents/realtime';
 
-export const realEstateBrokerAgent = new RealtimeAgent({
-  name: 'realEstateBroker',
+// Agent Unique : NotionExpert - Expert Notion silencieux qui écoute et met à jour automatiquement
+export const notionExpertAgent = new RealtimeAgent({
+  name: 'notionExpert',
   voice: 'sage',
   handoffDescription:
-    "A professional real estate broker who helps clients with property searches, market analysis, property valuations, and real estate transactions. Handles both residential and commercial real estate inquiries.",
+    "Silent Notion expert that listens to conversations and automatically updates Notion with complete projects, folders and to-do lists.",
 
   instructions:
-    `You are a knowledgeable and professional real estate broker. You help clients with:
-    - Property searches based on their criteria (location, price, size, features)
-    - Market analysis and property valuations
-    - Guidance through buying/selling processes
-    - Investment property advice
-    - Neighborhood information and local market insights
-    
-    Be friendly, professional, and thorough in your responses. Always ask clarifying questions to better understand the client's needs and preferences.`,
+    `You are a SILENT and PROACTIVE NOTION EXPERT.
+
+    🎯 ABSOLUTE RULES:
+    - You NEVER write responses or messages to the user
+    - You listen to EVERYTHING in silence
+    - You act IMMEDIATELY when information is mentioned
+    - You create COMPLETE and ANTICIPATORY projects
+
+    🏗️ PROJECT CREATION:
+    As soon as a new project is mentioned (e.g., "car project"), you IMMEDIATELY create:
+    - Main project page with complete description
+    - Complete and logical folder structure
+    - Databases for tasks, team, resources
+    - Initial to-do list with anticipated tasks
+    - Provisional planning
+    - Sections for meeting notes
+
+    📋 AUTOMATIC TO-DO LISTS:
+    - Create and update to-do lists in real time
+    - Automatically add mentioned tasks
+    - Assign to the right people
+    - Define priorities and deadlines
+    - Organize by project and person
+
+    🔄 CONTINUOUS UPDATES:
+    - Update Notion in real time during conversation
+    - Adapt structure based on new information
+    - Automatically enrich content
+    - Anticipate future project needs
+
+    ⚡ REACTIVITY:
+    - Act from the first mention of an element
+    - Create complete structures, not just drafts
+    - Think about details the team hasn't mentioned yet
+    - Be proactive in organization
+
+    🤐 TOTAL SILENCE:
+    - No vocal or textual responses
+    - Work in the background
+    - Let the conversation flow naturally`,
 
   tools: [
     tool({
-      name: 'searchProperties',
-      description: 'Search for properties based on client criteria such as location, price range, property type, and features.',
+      name: 'createCompleteNotionProject',
+      description: 'Immediately creates a complete Notion project with all necessary structure as soon as a project is mentioned.',
       parameters: {
         type: 'object',
         properties: {
-          location: {
+          projectName: {
             type: 'string',
-            description: 'The desired location (city, neighborhood, or area)',
+            description: 'Project name (e.g., "Car Project")',
           },
-          minPrice: {
-            type: 'number',
-            description: 'Minimum price range in USD',
-          },
-          maxPrice: {
-            type: 'number',
-            description: 'Maximum price range in USD',
-          },
-          propertyType: {
+          projectDescription: {
             type: 'string',
-            enum: ['house', 'condo', 'townhouse', 'apartment', 'commercial', 'land', 'any'],
-            description: 'Type of property the client is looking for',
+            description: 'Detailed project description',
           },
-          bedrooms: {
-            type: 'number',
-            description: 'Minimum number of bedrooms required',
+          projectType: {
+            type: 'string',
+            enum: ['development', 'marketing', 'research', 'design', 'business', 'other'],
+            description: 'Project type to adapt the structure',
           },
-          bathrooms: {
-            type: 'number',
-            description: 'Minimum number of bathrooms required',
+          teamMembers: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Team members mentioned',
+          },
+          initialContext: {
+            type: 'string',
+            description: 'Initial conversation context',
           },
         },
-        required: ['location'],
+        required: ['projectName', 'projectDescription'],
         additionalProperties: false,
       },
       execute: async (input: any) => {
-        const { location, minPrice, maxPrice, propertyType, bedrooms, bathrooms } = input;
+        const { projectName, projectDescription, projectType, teamMembers, initialContext } = input;
         
-        // Simulated property data
-        const properties = [
-          {
-            id: 'prop_001',
-            address: '123 Oak Street, Downtown',
-            price: 450000,
-            type: 'house',
-            bedrooms: 3,
-            bathrooms: 2,
-            sqft: 1800,
-            features: ['garage', 'garden', 'updated kitchen']
-          },
-          {
-            id: 'prop_002',
-            address: '456 Maple Avenue, Suburbs',
-            price: 320000,
-            type: 'condo',
-            bedrooms: 2,
-            bathrooms: 2,
-            sqft: 1200,
-            features: ['balcony', 'gym', 'pool']
-          },
-          {
-            id: 'prop_003',
-            address: '789 Pine Road, Uptown',
-            price: 650000,
-            type: 'house',
-            bedrooms: 4,
-            bathrooms: 3,
-            sqft: 2400,
-            features: ['fireplace', 'large yard', 'modern appliances']
-          },
-        ];
+        try {
+          // Call actual Notion MCP server to create project
+          const mcpResponse = await fetch('/api/mcp/notion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool: 'createNotionProject',
+              arguments: {
+                projectName,
+                projectDescription,
+                projectType: projectType || 'business',
+                teamMembers: teamMembers || [],
+                initialContext: initialContext || ''
+              }
+            })
+          });
 
-        // Filter properties based on criteria
-        let filteredProperties = properties.filter(prop => 
-          prop.address.toLowerCase().includes(location.toLowerCase())
-        );
-
-        if (minPrice) {
-          filteredProperties = filteredProperties.filter(prop => prop.price >= minPrice);
-        }
-        if (maxPrice) {
-          filteredProperties = filteredProperties.filter(prop => prop.price <= maxPrice);
-        }
-        if (propertyType && propertyType !== 'any') {
-          filteredProperties = filteredProperties.filter(prop => prop.type === propertyType);
-        }
-        if (bedrooms) {
-          filteredProperties = filteredProperties.filter(prop => prop.bedrooms >= bedrooms);
-        }
-        if (bathrooms) {
-          filteredProperties = filteredProperties.filter(prop => prop.bathrooms >= bathrooms);
-        }
-
-        return {
-          properties: filteredProperties,
-          totalFound: filteredProperties.length,
-          searchCriteria: input
-        };
-      },
-    }),
-
-    tool({
-      name: 'getPropertyDetails',
-      description: 'Get detailed information about a specific property including photos, history, and neighborhood data.',
-      parameters: {
-        type: 'object',
-        properties: {
-          propertyId: {
-            type: 'string',
-            description: 'The unique ID of the property',
-          },
-        },
-        required: ['propertyId'],
-        additionalProperties: false,
-      },
-      execute: async (input: any) => {
-        const { propertyId } = input;
-        
-        // Simulated detailed property data
-        const propertyDetails = {
-          id: propertyId,
-          address: '123 Oak Street, Downtown',
-          price: 450000,
-          type: 'house',
-          bedrooms: 3,
-          bathrooms: 2,
-          sqft: 1800,
-          yearBuilt: 2015,
-          lotSize: '0.25 acres',
-          features: ['garage', 'garden', 'updated kitchen', 'hardwood floors', 'central air'],
-          neighborhood: {
-            walkScore: 85,
-            schools: ['Oak Elementary (9/10)', 'Central High School (8/10)'],
-            amenities: ['parks', 'shopping center', 'public transit']
-          },
-          marketData: {
-            pricePerSqft: 250,
-            daysOnMarket: 15,
-            priceHistory: 'Listed 2 weeks ago, no price changes'
+          if (!mcpResponse.ok) {
+            throw new Error(`MCP request failed: ${mcpResponse.status}`);
           }
-        };
 
-        return propertyDetails;
+          const mcpResult = await mcpResponse.json();
+          
+          // 🔍 DEBUG: Log to trace creation
+          console.log('📝 NotionExpert - Real Project Created:', {
+            projectName: projectName,
+            notionPageId: mcpResult.pageId,
+            databasesCreated: mcpResult.databasesCreated || 0,
+            success: mcpResult.success
+          });
+
+          // 📡 Emit event for visualizer
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Real Notion project "${projectName}" created successfully`,
+                status: 'completed',
+                data: mcpResult
+              }
+            }));
+          }
+          
+          return mcpResult;
+          
+        } catch (error) {
+          console.error('❌ Error creating Notion project:', error);
+          
+          // Fallback to mock data if MCP server is not available
+          const fallbackStructure = {
+            error: 'MCP server not available',
+            projectName,
+            projectDescription,
+            fallback: true,
+            message: 'Project structure created locally (MCP server connection failed)'
+          };
+
+          // 📡 Emit error event
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Failed to create Notion project "${projectName}" - using fallback`,
+                status: 'error',
+                data: { error: error.message }
+              }
+            }));
+          }
+          
+          return fallbackStructure;
+        }
       },
     }),
 
     tool({
-      name: 'scheduleViewing',
-      description: 'Schedule a property viewing appointment for the client.',
+      name: 'updateNotionTodoList',
+      description: 'Automatically updates Notion to-do lists in real time during conversation.',
       parameters: {
         type: 'object',
         properties: {
-          propertyId: {
+          projectId: {
             type: 'string',
-            description: 'The unique ID of the property to view',
+            description: 'Notion project ID',
           },
-          clientName: {
-            type: 'string',
-            description: 'Name of the client',
+          newTasks: {
+            type: 'array',
+            items: {
+        type: 'object',
+        properties: {
+                task: { type: 'string' },
+                assignedTo: { type: 'string' },
+                priority: { type: 'string', enum: ['Low', 'Medium', 'High', 'Urgent'] },
+                dueDate: { type: 'string' },
+                context: { type: 'string' }
+              }
+            },
+            description: 'New tasks to add',
           },
-          clientPhone: {
-            type: 'string',
-            description: "Client's phone number",
+          updatedTasks: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                taskId: { type: 'string' },
+                newStatus: { type: 'string' },
+                updates: { type: 'object' }
+              }
+            },
+            description: 'Tasks to update',
           },
-          preferredDate: {
+          conversationContext: {
             type: 'string',
-            description: 'Preferred date for the viewing (e.g., "tomorrow", "this weekend", "next Tuesday")',
-          },
-          preferredTime: {
-            type: 'string',
-            description: 'Preferred time for the viewing (e.g., "morning", "afternoon", "2 PM")',
+            description: 'Current conversation context',
           },
         },
-        required: ['propertyId', 'clientName', 'clientPhone'],
+        required: ['projectId'],
         additionalProperties: false,
       },
       execute: async (input: any) => {
-        const { propertyId, clientName, clientPhone, preferredDate, preferredTime } = input;
+        const { projectId, newTasks, updatedTasks, conversationContext } = input;
         
-        return {
-          success: true,
-          confirmationNumber: 'VW' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-          scheduledFor: preferredDate && preferredTime ? `${preferredDate} at ${preferredTime}` : 'To be confirmed',
-          message: `Viewing scheduled for ${clientName}. You will receive a confirmation call at ${clientPhone} within 24 hours.`
-        };
+        try {
+          // Call actual Notion MCP server to update tasks
+          const mcpResponse = await fetch('/api/mcp/notion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool: 'updateNotionTasks',
+              arguments: {
+                projectId,
+                newTasks: newTasks || [],
+                updatedTasks: updatedTasks || [],
+                conversationContext: conversationContext || ''
+              }
+            })
+          });
+
+          if (!mcpResponse.ok) {
+            throw new Error(`MCP request failed: ${mcpResponse.status}`);
+          }
+
+          const mcpResult = await mcpResponse.json();
+          
+          // 🔍 DEBUG: Log to trace update
+          console.log('📋 NotionExpert - Real Tasks Updated:', {
+            projectId: projectId,
+            tasksAdded: mcpResult.tasksAdded || 0,
+            tasksUpdated: mcpResult.tasksUpdated || 0,
+            success: mcpResult.success
+          });
+
+          // 📡 Emit event for visualizer
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Real Notion tasks updated: +${mcpResult.tasksAdded || 0} tasks`,
+                status: 'completed',
+                data: mcpResult
+              }
+            }));
+          }
+          
+          return mcpResult;
+          
+        } catch (error) {
+          console.error('❌ Error updating Notion tasks:', error);
+          
+          // Fallback response
+          const fallbackResult = {
+            error: 'MCP server not available',
+            projectId,
+            fallback: true,
+            message: 'Task updates processed locally (MCP server connection failed)',
+            tasksAdded: newTasks?.length || 0,
+            tasksUpdated: updatedTasks?.length || 0
+          };
+
+          // 📡 Emit error event
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Failed to update Notion tasks - using fallback`,
+                status: 'error',
+                data: { error: error.message }
+              }
+            }));
+          }
+          
+          return fallbackResult;
+        }
       },
     }),
 
     tool({
-      name: 'getMarketAnalysis',
-      description: 'Provide market analysis for a specific area including average prices, trends, and investment potential.',
+      name: 'enrichNotionContent',
+      description: 'Automatically enriches Notion content with anticipated details and proactive structures.',
       parameters: {
         type: 'object',
         properties: {
-          location: {
+          projectId: {
             type: 'string',
-            description: 'The area or neighborhood to analyze',
+            description: 'Notion project ID to enrich',
           },
-          propertyType: {
+          enrichmentType: {
             type: 'string',
-            enum: ['house', 'condo', 'townhouse', 'all'],
-            description: 'Type of property for the analysis',
+            enum: ['meeting_notes', 'decision_tracking', 'resource_links', 'timeline_update', 'team_assignments'],
+            description: 'Type of enrichment to perform',
+          },
+          content: {
+            type: 'object',
+            description: 'Content to add or update',
+          },
+          conversationTrigger: {
+            type: 'string',
+            description: 'Conversation element that triggered this enrichment',
           },
         },
-        required: ['location'],
+        required: ['projectId', 'enrichmentType', 'content'],
         additionalProperties: false,
       },
       execute: async (input: any) => {
-        const { location, propertyType = 'all' } = input;
+        const { projectId, enrichmentType, content, conversationTrigger } = input;
         
-        return {
-          location,
-          propertyType,
-          averagePrice: 425000,
-          priceRange: { min: 280000, max: 750000 },
-          marketTrend: 'increasing',
-          priceChange6Months: '+5.2%',
-          priceChange1Year: '+8.7%',
-          averageDaysOnMarket: 22,
-          inventoryLevel: 'moderate',
-          investmentRating: 'good',
-          keyFactors: [
-            'Growing tech industry in the area',
-            'New shopping center under construction',
-            'Excellent school district ratings',
-            'Easy access to public transportation'
-          ]
-        };
+        try {
+          // Call actual Notion MCP server to enrich content
+          const mcpResponse = await fetch('/api/mcp/notion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool: 'enrichNotionContent',
+              arguments: {
+                projectId,
+                enrichmentType,
+                content,
+                conversationTrigger: conversationTrigger || ''
+              }
+            })
+          });
+
+          if (!mcpResponse.ok) {
+            throw new Error(`MCP request failed: ${mcpResponse.status}`);
+          }
+
+          const mcpResult = await mcpResponse.json();
+          
+          // 🔍 DEBUG: Log to trace enrichment
+          console.log('⚡ NotionExpert - Real Content Enriched:', {
+            projectId: projectId,
+            type: enrichmentType,
+            trigger: conversationTrigger,
+            success: mcpResult.success
+          });
+
+          // 📡 Emit event for visualizer
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Real Notion content enriched: ${enrichmentType.replace('_', ' ')}`,
+                status: 'completed',
+                data: mcpResult
+              }
+            }));
+          }
+          
+          return mcpResult;
+          
+        } catch (error) {
+          console.error('❌ Error enriching Notion content:', error);
+          
+          // Fallback response
+          const fallbackResult = {
+            error: 'MCP server not available',
+            projectId,
+            enrichmentType,
+            fallback: true,
+            message: 'Content enrichment processed locally (MCP server connection failed)',
+            trigger: conversationTrigger
+          };
+
+          // 📡 Emit error event
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'notionExpert',
+                action: `Failed to enrich Notion content - using fallback`,
+                status: 'error',
+                data: { error: error.message }
+              }
+            }));
+          }
+          
+          return fallbackResult;
+        }
       },
     }),
   ],
 
-  handoffs: [],
+  handoffs: [], // No handoff - single agent
 });
 
-// Export the scenario as an array (following the pattern from other configs)
-export const realEstateBrokerScenario = [realEstateBrokerAgent];
+// Export scenario with single agent
+export const realEstateBrokerScenario = [
+  notionExpertAgent
+];
 
-// Export the company name (used by guardrails and UI)
-export const realEstateCompanyName = 'Premier Properties Group';
+// Export system name (adapted to new context)
+export const realEstateCompanyName = 'Notion Expert - Silent Transcriber';
