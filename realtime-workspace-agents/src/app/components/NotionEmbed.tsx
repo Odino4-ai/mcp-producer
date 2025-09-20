@@ -8,13 +8,14 @@ import type { ExtendedRecordMap } from "notion-types";
 import "react-notion-x/src/styles.css";
 import "prismjs/themes/prism-tomorrow.css"; // for code syntax highlighting
 import "katex/dist/katex.min.css"; // for math equations
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export interface NotionEmbedProps {
   isExpanded: boolean;
-  pageId?: string;
 }
 
-function NotionEmbed({ isExpanded, pageId }: NotionEmbedProps) {
+function NotionEmbed({ isExpanded }: NotionEmbedProps) {
   // Default Notion page URL if none provided
   const [recordMap, setRecordMap] = useState<ExtendedRecordMap | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,8 @@ function NotionEmbed({ isExpanded, pageId }: NotionEmbedProps) {
   // Extract page ID from the URL you provided
   // const defaultPageId = "Development-Projects-274a860b701080368183ce1111e68d65";
   const defaultPageId = "274a860b701080368183ce1111e68d65";
+  const params = useParams();
+  const pageId = params.pageId as string;
   // www.notion.so/guandjoy/Development-Projects-274a860b701080368183ce1111e68d65?source=copy_link
   const notionPageId = pageId || defaultPageId;
 
@@ -34,7 +37,9 @@ function NotionEmbed({ isExpanded, pageId }: NotionEmbedProps) {
       setError(null);
 
       try {
-        const response = await fetch(`/api/notion?pageId=${notionPageId}`);
+        const response = await fetch(
+          `/api/notion?notionPageId=${notionPageId}`
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -87,6 +92,9 @@ function NotionEmbed({ isExpanded, pageId }: NotionEmbedProps) {
                 darkMode={false}
                 disableHeader={true}
                 className="notion-page"
+                components={{
+                  nextLink: Link,
+                }}
               />
             )}
           </div>

@@ -7,7 +7,6 @@ import Image from "next/image";
 
 // UI components
 import Transcript from "./components/Transcript";
-import NotionEmbed from "./components/NotionEmbed";
 import BottomToolbar from "./components/BottomToolbar";
 // Removed Workspace import (no longer used)
 
@@ -40,7 +39,7 @@ import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 const WORKSPACE_VERSION_KEY = 'workspace_version';
 const MEDICAL_RESEARCH_VERSION = 'medical_research_v1';
 
-function App() {
+function App({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()!;
 
   // One-time migration: when scenario is workspaceBuilder (investment research) ensure workspace state is versioned.
@@ -475,7 +474,7 @@ function App() {
           canSend={sessionStatus === "CONNECTED"}
           isVisible={isTranscriptVisible}
         />
-        <NotionEmbed isExpanded={isEventsPaneExpanded} />
+        {children}
       </div>
 
       <BottomToolbar
