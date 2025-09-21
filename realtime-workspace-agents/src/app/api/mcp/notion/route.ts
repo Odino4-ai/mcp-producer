@@ -572,31 +572,7 @@ class NotionMCPClient {
         }
       });
       
-      // Ajouter le timestamp et contexte
-      if (context || timestamp) {
-        const metaInfo = [];
-        if (timestamp) metaInfo.push(`🕒 ${new Date(timestamp).toLocaleString()}`);
-        if (context) metaInfo.push(`💬 ${context}`);
-        
-        documentContent.push({
-          "object": "block",
-          "type": "paragraph",
-          "paragraph": {
-            "rich_text": [
-              {
-                "type": "text",
-                "text": {
-                  "content": metaInfo.join(' • ')
-                },
-                "annotations": {
-                  "italic": true,
-                  "color": "gray"
-                }
-              }
-            ]
-          }
-        });
-      }
+      // Pas de métadonnées dans le document final - garder propre
       
       // Ajouter le contenu principal
       if (structure && structure.sections && structure.sections.length > 0) {
@@ -655,27 +631,7 @@ class NotionMCPClient {
         });
       }
       
-      // Ajouter une callout pour les insights importants
-      if (importance === 'high' || importance === 'critical') {
-        documentContent.push({
-          "object": "block",
-          "type": "callout",
-          "callout": {
-            "rich_text": [
-              {
-                "type": "text",
-                "text": {
-                  "content": `${importance === 'critical' ? '🚨' : '⚡'} Important: This ${contentType} requires attention`
-                }
-              }
-            ],
-            "icon": {
-              "emoji": importance === 'critical' ? '🚨' : '⚡'
-            },
-            "color": importance === 'critical' ? 'red_background' : 'orange_background'
-          }
-        });
-      }
+      // Pas de callouts dans le document final - garder propre et professionnel
       
       // 5. Ajouter le nouveau contenu à la page Notion
       let insertionResult = null;
@@ -769,18 +725,35 @@ class NotionMCPClient {
       
       console.log('✅ Test block created:', createResponse);
       
-      // 2. Attendre 2 secondes
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 2. Attendre 3 secondes pour la synchronisation Notion
+      console.log('⏳ Waiting 3 seconds for Notion sync...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // 3. Récupérer les blocs pour trouver celui qu'on vient de créer
-      const blocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=10`);
-      const testBlock = blocks.results?.find((block: any) => 
-        block.type === 'paragraph' && 
-        block.paragraph?.rich_text?.[0]?.text?.content?.includes('🧪 TEST BLOCK')
-      );
+      // 3. Récupérer TOUS les blocs pour trouver celui qu'on vient de créer
+      const blocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=100`);
+      console.log(`📊 Found ${blocks.results?.length || 0} total blocks on page`);
+      
+      // Debug: afficher tous les blocs récents
+      const recentBlocks = blocks.results?.slice(-5) || [];
+      console.log('🔍 Last 5 blocks on page:');
+      recentBlocks.forEach((block: any, index: number) => {
+        const content = block[block.type]?.rich_text?.[0]?.text?.content || 'No content';
+        console.log(`  ${index}: ${block.type} - "${content.substring(0, 50)}..."`);
+      });
+      
+      const testBlock = blocks.results?.find((block: any) => {
+        const content = block[block.type]?.rich_text?.[0]?.text?.content || '';
+        return content.includes('🧪 TEST BLOCK');
+      });
       
       if (!testBlock) {
-        throw new Error('Could not find the test block to delete');
+        // Essayer de trouver le dernier bloc créé
+        const lastBlock = blocks.results?.[blocks.results.length - 1];
+        console.log('❌ Could not find test block, last block is:', {
+          type: lastBlock?.type,
+          content: lastBlock?.[lastBlock?.type]?.rich_text?.[0]?.text?.content?.substring(0, 100)
+        });
+        throw new Error(`Could not find the test block. Found ${blocks.results?.length || 0} blocks total.`);
       }
       
       console.log('🔍 Found test block to delete:', testBlock.id);
@@ -808,6 +781,304 @@ class NotionMCPClient {
           message: 'Deletion test failed - this might explain why content is not being replaced',
           deletionWorking: false
         }
+      };
+    }
+  }
+  
+  async updateContentInPlace(args: any): Promise<MCPResponse> {
+    const { contentType, title, content, structure, context, timestamp, importance } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      // 🔧 Approche alternative : modifier le contenu existant au lieu de supprimer/recréer
+      
+      // 1. Lire le contenu existant
+      const existingBlocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=100`);
+      const existingContent = existingBlocks.results || [];
+      
+      // 2. Chercher une section existante avec un titre similaire
+      let targetBlock = null;
+      const cleanTitle = title.replace(/^[🚀📌✅💡📝🔄📋📄]\s*/, '');
+      
+      for (const block of existingContent) {
+        if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
+          const blockText = block[block.type]?.rich_text?.[0]?.text?.content || '';
+          const cleanBlockText = blockText.replace(/^[🚀📌✅💡📝🔄📋📄]\s*/, '').replace(/\s*\(Updated.*\)$/, '');
+          
+          if (cleanBlockText.toLowerCase().includes(cleanTitle.toLowerCase()) || 
+              cleanTitle.toLowerCase().includes(cleanBlockText.toLowerCase())) {
+            targetBlock = block;
+            console.log('🔍 Found existing section to update:', cleanBlockText);
+            break;
+          }
+        }
+      }
+      
+      if (targetBlock) {
+        // 3. Modifier le titre existant avec indication de mise à jour
+        const titleEmoji = {
+          'project': '🚀',
+          'topic': '📌',
+          'decision': '✅',
+          'insight': '💡',
+          'detail': '📝',
+          'update': '🔄',
+          'note': '📋'
+        }[contentType] || '📄';
+        
+        const updatedTitle = `${titleEmoji} ${title} (Updated ${new Date().toLocaleTimeString()})`;
+        
+        // Modifier le titre
+        await this.callNotionAPI(`/blocks/${targetBlock.id}`, 'PATCH', {
+          [targetBlock.type]: {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": updatedTitle
+                },
+                "annotations": {
+                  "bold": importance === 'critical',
+                  "color": importance === 'critical' ? 'red' : 
+                          importance === 'high' ? 'orange' : 'blue'
+                }
+              }
+            ]
+          }
+        });
+        
+        // 4. Trouver le premier paragraphe suivant ce titre et le modifier
+        const targetIndex = existingContent.findIndex(block => block.id === targetBlock.id);
+        let contentBlockToUpdate = null;
+        
+        for (let i = targetIndex + 1; i < existingContent.length; i++) {
+          const nextBlock = existingContent[i];
+          if (nextBlock.type === 'paragraph') {
+            contentBlockToUpdate = nextBlock;
+            break;
+          }
+          // Arrêter si on trouve un autre titre
+          if (nextBlock.type === 'heading_1' || nextBlock.type === 'heading_2' || nextBlock.type === 'heading_3') {
+            break;
+          }
+        }
+        
+        if (contentBlockToUpdate) {
+          // Modifier le contenu existant (propre, sans métadonnées)
+          await this.callNotionAPI(`/blocks/${contentBlockToUpdate.id}`, 'PATCH', {
+            paragraph: {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": content // Contenu propre sans timestamp
+                  }
+                }
+              ]
+            }
+          });
+          
+          console.log('✅ Updated existing content block');
+        } else {
+          // Ajouter un nouveau paragraphe après le titre (propre)
+          await this.callNotionAPI(`/blocks/${targetBlock.id}/children`, 'PATCH', {
+            children: [{
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": content // Contenu propre sans métadonnées
+                    }
+                  }
+                ]
+              }
+            }]
+          });
+          
+          console.log('✅ Added new content block after title');
+        }
+        
+        return {
+          success: true,
+          data: {
+            contentType,
+            title,
+            targetPageId,
+            action: 'UPDATED_IN_PLACE',
+            wasUpdate: true,
+            timestamp: timestamp || new Date().toISOString(),
+            notionUrl: `https://notion.so/${targetPageId.replace(/-/g, '')}`
+          }
+        };
+        
+      } else {
+        // Pas de section existante, créer normalement
+        return await this.documentLiveContent(args);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error updating content in place:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async deleteAllPageContent(args: any): Promise<MCPResponse> {
+    const { context } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      console.log('🧹 Deleting ALL content from page...');
+      
+      // 1. Récupérer tous les blocs de la page
+      const existingBlocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=100`);
+      const blocksToDelete = existingBlocks.results || [];
+      
+      console.log(`🗑️ Found ${blocksToDelete.length} blocks to delete`);
+      
+      // 2. Supprimer tous les blocs un par un
+      let deletedCount = 0;
+      for (const block of blocksToDelete) {
+        try {
+          await this.callNotionAPI(`/blocks/${block.id}`, 'DELETE');
+          deletedCount++;
+          // Pause pour éviter les rate limits
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } catch (error) {
+          console.warn(`Failed to delete block ${block.id}`);
+        }
+      }
+      
+      // La page est maintenant complètement vide - pas de message de confirmation
+      console.log(`✅ Deleted ${deletedCount}/${blocksToDelete.length} blocks - page is now empty`);
+      
+      return {
+        success: true,
+        data: {
+          action: 'PAGE_CLEARED',
+          blocksDeleted: deletedCount,
+          totalBlocks: blocksToDelete.length,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error deleting page content:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async replaceAllPageContent(args: any): Promise<MCPResponse> {
+    const { content, context } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      console.log('🔄 Replacing ALL content on page...');
+      
+      // 1. Supprimer tout le contenu existant
+      const deleteResult = await this.deleteAllPageContent(args);
+      
+      if (!deleteResult.success) {
+        throw new Error('Failed to delete existing content');
+      }
+      
+      // Attendre que la suppression soit effective
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 2. Créer le document final propre (pas de métadonnées)
+      const newContent = [{
+        "object": "block",
+        "type": "heading_1",
+        "heading_1": {
+          "rich_text": [
+            {
+              "type": "text",
+              "text": {
+                "content": content // Utiliser directement le contenu comme titre
+              },
+              "annotations": {
+                "bold": true
+              }
+            }
+          ]
+        }
+      }];
+      
+      // Si le contenu est long, l'ajouter aussi comme paragraphe
+      if (content && content.length > 50) {
+        newContent.push({
+          "object": "block",
+          "type": "paragraph",
+          "paragraph": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": content
+                }
+              }
+            ]
+          }
+        });
+      }
+      
+      await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+        children: newContent
+      });
+      
+      console.log('✅ Successfully replaced all page content');
+      
+      return {
+        success: true,
+        data: {
+          action: 'PAGE_REPLACED',
+          newContent: content,
+          blocksDeleted: deleteResult.data?.blocksDeleted || 0,
+          blocksAdded: newContent.length,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error replacing page content:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async managePageContent(args: any): Promise<MCPResponse> {
+    const { content, context } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      // Gestion intelligente selon le contexte
+      if (context?.toLowerCase().includes('delete') || context?.toLowerCase().includes('clear')) {
+        return await this.deleteAllPageContent(args);
+      } else if (context?.toLowerCase().includes('replace')) {
+        return await this.replaceAllPageContent(args);
+      } else {
+        // Action par défaut : nettoyer et réorganiser
+        return await this.replaceAllPageContent({
+          ...args,
+          content: content || "Page cleaned and reorganized"
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error managing page content:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -845,6 +1116,22 @@ export async function POST(request: NextRequest) {
         
       case 'testNotionDeletion':
         result = await mcpClient.testNotionDeletion(args);
+        break;
+        
+      case 'updateContentInPlace':
+        result = await mcpClient.updateContentInPlace(args);
+        break;
+        
+      case 'deleteAllPageContent':
+        result = await mcpClient.deleteAllPageContent(args);
+        break;
+        
+      case 'replaceAllPageContent':
+        result = await mcpClient.replaceAllPageContent(args);
+        break;
+        
+      case 'managePageContent':
+        result = await mcpClient.managePageContent(args);
         break;
         
       default:

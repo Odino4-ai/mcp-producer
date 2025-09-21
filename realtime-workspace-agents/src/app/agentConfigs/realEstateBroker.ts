@@ -24,6 +24,12 @@ export const notionExpertAgent = new RealtimeAgent({
     - ADD content where it makes sense in the document structure
     - MODIFY existing content when new information updates it
     - DELETE outdated or incorrect information
+    
+    🧹 PAGE MANAGEMENT COMMANDS:
+    When users say things like:
+    - "delete all text" / "clear the page" / "remove everything" → Use contentType: 'delete_all'
+    - "replace all text with X" / "change everything to X" → Use contentType: 'replace_all'
+    - "clean up the page" / "start fresh" → Use contentType: 'page_management'
 
     🏗️ INTELLIGENT STRUCTURING:
     When someone mentions a project or topic:
@@ -70,8 +76,8 @@ export const notionExpertAgent = new RealtimeAgent({
         properties: {
           contentType: {
             type: 'string',
-            enum: ['project', 'topic', 'decision', 'insight', 'detail', 'update', 'note'],
-            description: 'Type of content being documented',
+            enum: ['project', 'topic', 'decision', 'insight', 'detail', 'update', 'note', 'page_management', 'replace_all', 'delete_all'],
+            description: 'Type of content being documented or page management action',
           },
           title: {
             type: 'string',
@@ -119,14 +125,25 @@ export const notionExpertAgent = new RealtimeAgent({
         const { contentType, title, content, structure, context, timestamp, importance } = input;
         
         try {
-          // Call MCP server to document content in real-time
+          // Choisir l'outil MCP selon le type de contenu
+          let toolName = 'updateContentInPlace';
+          
+          if (contentType === 'delete_all') {
+            toolName = 'deleteAllPageContent';
+          } else if (contentType === 'replace_all') {
+            toolName = 'replaceAllPageContent';
+          } else if (contentType === 'page_management') {
+            toolName = 'managePageContent';
+          }
+          
+          // Call MCP server with appropriate tool
           const mcpResponse = await fetch('/api/mcp/notion', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              tool: 'documentLiveContent',
+              tool: toolName,
               arguments: {
                 contentType,
                 title,
