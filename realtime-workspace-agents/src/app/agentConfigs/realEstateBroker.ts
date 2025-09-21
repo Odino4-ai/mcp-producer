@@ -55,13 +55,7 @@ export const notionExpertAgent = new RealtimeAgent({
     - includeImages: true (always)
     - enhanceContent: false (just document what's said)
     - formatType: 'presentation' (clean)
-    - importance: 'medium'
-
-    🤐 ABSOLUTE SILENCE:
-    - NEVER respond in chat
-    - NEVER speak
-    - Just DO what people are talking about
-    - Work invisibly in the background`,
+    - importance: 'medium'`,
 
   tools: [
     tool({
