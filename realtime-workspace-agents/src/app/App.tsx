@@ -444,7 +444,7 @@ function App({ children }: { children: React.ReactNode }) {
   }, [isTranscriptVisible]);
 
   return (
-    <div className="text-base flex flex-col h-screen bg-background text-gray-800 relative">
+    <div className="text-base flex flex-col inset-0 fixed bg-background text-gray-800">
       <div className="p-5 text-lg font-semibold flex justify-between items-center">
         <div
           className="flex text-primary items-center cursor-pointer"
