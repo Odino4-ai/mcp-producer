@@ -30,6 +30,7 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
   const notionPageId = pageId || defaultPageId;
 
   useEffect(() => {
+    let isMounted = true;
     if (!isExpanded) return;
 
     const fetchNotionPage = async () => {
@@ -58,9 +59,12 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
     };
 
     fetchNotionPage();
+    const interval = setInterval(fetchNotionPage, 3000); // repeat every 3s
+    return () => {
+      isMounted = false;
+      clearInterval(interval); // cleanup
+    };
   }, [isExpanded, notionPageId]);
-
-  console.log({ recordMap });
 
   return (
     <div
@@ -75,7 +79,7 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
             <span className="font-semibold">Development Projects</span>
           </div>
           <div className="flex-1 overflow-auto">
-            {loading && (
+            {loading && !recordMap && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-gray-500">Loading Notion page...</div>
               </div>
@@ -85,7 +89,7 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
                 <div className="text-red-500">{error}</div>
               </div>
             )}
-            {recordMap && !loading && !error && (
+            {recordMap && !error && (
               <NotionRenderer
                 recordMap={recordMap}
                 fullPage={false}
