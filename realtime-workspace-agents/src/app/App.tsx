@@ -442,24 +442,13 @@ function App({ children }: { children: React.ReactNode }) {
   }, [isTranscriptVisible]);
 
   return (
-    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
+    <div className="text-base flex flex-col h-screen bg-background text-gray-800 relative">
       <div className="p-5 text-lg font-semibold flex justify-between items-center">
         <div
-          className="flex items-center cursor-pointer"
+          className="flex text-primary items-center cursor-pointer"
           onClick={() => window.location.reload()}
         >
-          <div>
-            <Image
-              src="/openai-logomark.svg"
-              alt="OpenAI Logo"
-              width={20}
-              height={20}
-              className="mr-2"
-            />
-          </div>
-          <div>
-            {realEstateCompanyName} <span className="text-gray-500">Agent</span>
-          </div>
+          Rio
         </div>
         {/* Removed scenario & agent dropdowns for single-agent app */}
       </div>
