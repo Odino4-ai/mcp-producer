@@ -1364,10 +1364,55 @@ class NotionMCPClient {
       
       // Ajouter le tableau selon la position
       if (position === 'beginning') {
-        // Insérer au début de la page
-        await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
-          children: tableContent
-        });
+        // Pour insérer au début, on doit d'abord récupérer tous les blocs existants
+        const existingBlocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=100`);
+        const allBlocks = existingBlocks.results || [];
+        
+        if (allBlocks.length > 0) {
+          // Supprimer tous les blocs existants temporairement
+          const blocksToMove = [];
+          for (const block of allBlocks) {
+            try {
+              // Sauvegarder le contenu avant suppression
+              blocksToMove.push(block);
+              await this.callNotionAPI(`/blocks/${block.id}`, 'DELETE');
+              await new Promise(resolve => setTimeout(resolve, 50)); // Rate limit
+            } catch (error) {
+              console.warn(`Could not delete block ${block.id} for repositioning`);
+            }
+          }
+          
+          // Ajouter le tableau en premier
+          await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+            children: tableContent
+          });
+          
+          // Attendre un peu
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Remettre les anciens blocs après le tableau
+          const blocksToRestore = blocksToMove.map((block: any) => {
+            // Recréer les blocs sans leur ID
+            const { id, created_time, last_edited_time, created_by, last_edited_by, parent, archived, ...blockContent } = block;
+            return {
+              object: "block",
+              ...blockContent
+            };
+          });
+          
+          if (blocksToRestore.length > 0) {
+            await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+              children: blocksToRestore
+            });
+          }
+          
+          console.log(`✅ Added table at beginning and restored ${blocksToRestore.length} existing blocks`);
+        } else {
+          // Page vide, juste ajouter le tableau
+          await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+            children: tableContent
+          });
+        }
       } else {
         // Ajouter à la fin par défaut
         await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {

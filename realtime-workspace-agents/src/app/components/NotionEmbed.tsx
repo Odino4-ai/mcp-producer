@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NotionRenderer } from "react-notion-x";
 import type { ExtendedRecordMap } from "notion-types";
 
@@ -20,6 +20,11 @@ function NotionEmbed() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Refs for smart scroll
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Extract page ID from the URL you provided
   // const defaultPageId = "Development-Projects-274a860b701080368183ce1111e68d65";
@@ -28,6 +33,35 @@ function NotionEmbed() {
   const pageId = params.pageId as string;
   // www.notion.so/guandjoy/Development-Projects-274a860b701080368183ce1111e68d65?source=copy_link
   const notionPageId = pageId || defaultPageId;
+
+  // Smart scroll to bottom
+  const scrollToBottom = () => {
+    if (scrollContainerRef.current && !isUserScrollingRef.current) {
+      const { scrollHeight, clientHeight } = scrollContainerRef.current;
+      scrollContainerRef.current.scrollTop = scrollHeight - clientHeight;
+    }
+  };
+  
+  // Handle user scroll
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 5; // Tolerance
+      
+      if (!isAtBottom) {
+        isUserScrollingRef.current = true;
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
+          // If user hasn't scrolled for a bit, consider they might want to auto-scroll again
+          // But only re-enable if they scroll back to bottom
+        }, 1000);
+      } else {
+        isUserScrollingRef.current = false;
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchNotionPage = async () => {
@@ -47,6 +81,10 @@ function NotionEmbed() {
 
         const data: ExtendedRecordMap = await response.json();
         setRecordMap(data);
+        
+        // Scroll to bottom after new content is loaded
+        setTimeout(scrollToBottom, 100);
+        
       } catch (err) {
         console.error("Error fetching Notion page:", err);
         setError("Failed to load Notion page");
@@ -57,8 +95,21 @@ function NotionEmbed() {
 
     fetchNotionPage();
     const interval = setInterval(fetchNotionPage, 3000); // repeat every 3s
+    
+    // Add scroll listener
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+    
     return () => {
       clearInterval(interval); // cleanup
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
   }, [notionPageId]);
 
@@ -91,7 +142,7 @@ function NotionEmbed() {
         </Button>
       )}
       <div className="h-full flex flex-col">
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" ref={scrollContainerRef}>
           {loading && !recordMap && (
             <div className="flex items-center justify-center h-full">
               <div className="text-gray-500">Loading Notion page...</div>

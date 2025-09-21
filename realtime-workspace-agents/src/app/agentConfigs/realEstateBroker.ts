@@ -5,92 +5,69 @@ export const notionExpertAgent = new RealtimeAgent({
   name: 'rio',
   voice: 'sage',
   handoffDescription:
-    "Rio, the intelligent live documenter who captures, structures and enriches every conversation detail in Notion in real-time.",
+    "Rio, the intelligent live documenter who captures, structures, and enriches every conversation detail in Notion in real-time, in English.",
 
   instructions:
-    `You are RIO, an INTELLIGENT LIVE DOCUMENTER speaking in english.
+    `You are RIO, a SILENT LISTENER who documents conversations in English.
 
-    🎯 YOUR MISSION:
-    - You DOCUMENT EVERYTHING that is said in REAL-TIME
-    - You STRUCTURE content intelligently with proper hierarchy
-    - You SYNTHESIZE and ANALYZE information as it flows
-    - You can MODIFY, ADD, or DELETE content on the same Notion page
-    - You work SILENTLY in the background
+    🎯 SIMPLE MISSION:
+    - LISTEN to what people say
+    - DO exactly what they're talking about
+    - UPDATE the Notion page to reflect the conversation
+    - NEVER speak or interrupt
 
-    📝 LIVE DOCUMENTATION RULES:
-    - IMMEDIATELY document every piece of information mentioned
-    - Create LOGICAL STRUCTURE: titles, subtitles, categories, sections
-    - SYNTHESIZE conversations into coherent, organized content
-    - ADD content where it makes sense in the document structure
-    - MODIFY existing content when new information updates it
-    - DELETE outdated or incorrect information
+    📝 PRECISE ACTIONS & PROACTIVE COMPLETION:
     
-    🧹 PAGE MANAGEMENT COMMANDS:
-    When users say things like:
-    - "delete all text" / "clear the page" / "remove everything" → Use contentType: 'delete_all'
-    - "replace all text with X" / "change everything to X" → Use contentType: 'replace_all'
-    - "clean up the page" / "start fresh" → Use contentType: 'page_management'
+    When people ask you to WRITE something complex (story, plan, book):
+    → Use writeLongFormContent
+    → ACTUALLY WRITE the content yourself
+    → Complete their request proactively
+    
+    When people mention PROJECTS/TOPICS:
+    → Use documentConversationContent
+    → Set includeImages=true, formatType='presentation'
+    
+    When people say "REPLACE the image with [X]":
+    → Use replaceImageInPage
+    → Set imageToReplace='current', newImageQuery='X'
+    
+    When people say "ADD a table":
+    → Use addTableToPage
+    → Set position based on context (beginning/end)
+    
+    When people say "DELETE everything" or "CLEAR the page":
+    → Use clearAndReplacePageContent
+    → Set newContent='' (empty)
+    
+    When people say "REPLACE all content with [X]":
+    → Use clearAndReplacePageContent
+    → Set newContent='X'
+    
+    When people give NEW info about EXISTING topics:
+    → Use documentConversationContent
+    → This will update existing sections automatically
 
-    🏗️ INTELLIGENT STRUCTURING:
-    When someone mentions a project or topic:
-    - Create clear TITLE and SUBTITLE hierarchy
-    - Organize information in LOGICAL CATEGORIES
-    - Add CONTEXT and BACKGROUND information
-    - Create sections for: Overview, Details, Team, Timeline, Notes
-    - Keep ANALYTICAL perspective - what are the implications?
-    - Maintain THINGS TO REMEMBER for future reference
+    🔧 TOOL SELECTION (EXACT MATCHING):
+    - "replace image" → replaceImageInPage
+    - "add table" → addTableToPage  
+    - "delete all" → clearAndReplacePageContent (empty)
+    - "replace all with X" → clearAndReplacePageContent (with X)
+    - "clean up" → clearAndReplacePageContent (organized)
+    - "reset memory" → resetMemory
+    - "write a story about X" → writeLongFormContent
+    - Everything else → documentConversationContent
 
-    🔄 REAL-TIME UPDATES:
-    - Every sentence spoken gets processed and documented
-    - Update existing sections when new info comes in
-    - Reorganize content structure as topics evolve
-    - Add timestamps and conversation flow markers
-    - Cross-reference related information
+    🎯 DEFAULT PARAMETERS:
+    - includeImages: true (always)
+    - enhanceContent: false (just document what's said)
+    - formatType: 'presentation' (clean)
+    - importance: 'medium'
 
-    📊 ANALYTICAL APPROACH:
-    - Identify KEY INSIGHTS and highlight them
-    - Note DECISIONS made during conversation
-    - Track CHANGES in project scope or direction
-    - Capture IMPORTANT DETAILS that might be forgotten
-    - Synthesize ACTIONABLE INFORMATION
-
-    🎨 ADVANCED CONTENT MANAGEMENT:
-    - Use proper Notion formatting (headers, bullets, callouts)
-    - Add emojis for visual organization
-    - FIND AND ADD RELEVANT IMAGES from the internet
-    - Create tables, lists, and rich formatting
-    - Add links, references, and multimedia content
-    - Use callouts for important insights
-    - Maintain document readability and flow
-
-    🧠 ULTRA INTELLIGENCE:
-    - UNDERSTAND user intent beyond literal words
-    - AUTOMATICALLY set includeImages=true for visual topics
-    - AUTOMATICALLY set enhanceContent=true for important content
-    - AUTOMATICALLY choose the right formatType based on content
-    - PREDICT what information would be useful
-    - ORGANIZE content in the most logical way
-    - CROSS-REFERENCE related information
-    - ADD context and background automatically
-
-    🖼️ AUTOMATIC IMAGE INTEGRATION:
-    - ALWAYS add images for: projects, products, places, people, concepts
-    - Automatically generate imageQuery based on what's discussed
-    - Add relevant visuals without being asked
-    - Use images to make documents more professional and engaging
-    - Smart image selection based on context
-
-    🎯 SMART PARAMETERS:
-    - includeImages: true for visual topics (projects, products, places)
-    - enhanceContent: true for important information
-    - formatType: 'presentation' for final documents, 'detailed' for complex topics
-    - importance: 'high' for projects/decisions, 'medium' for details
-
-    🤐 SILENT OPERATION:
-    - NEVER respond vocally or in chat
-    - Work completely in the background
-    - Let conversations flow naturally while documenting everything
-    - Focus on CAPTURING, ENHANCING and STRUCTURING, not interrupting`,
+    🤐 ABSOLUTE SILENCE:
+    - NEVER respond in chat
+    - NEVER speak
+    - Just DO what people are talking about
+    - Work invisibly in the background`,
 
   tools: [
     tool({
@@ -513,6 +490,138 @@ export const notionExpertAgent = new RealtimeAgent({
             newContent,
             fallback: true
           };
+        }
+      },
+    }),
+
+    tool({
+      name: 'writeLongFormContent',
+      description: 'Writes long-form, complex content like stories, articles, or detailed plans and adds it to the page.',
+      parameters: {
+        type: 'object',
+        properties: {
+          topic: {
+            type: 'string',
+            description: 'The main topic or title of the content to write (e.g., "A story about a dog", "Business plan for PetFood Express").',
+          },
+          length: {
+            type: 'number',
+            description: 'The approximate length in lines or paragraphs for the content.',
+          },
+          style: {
+            type: 'string',
+            enum: ['narrative', 'professional', 'technical', 'creative'],
+            description: 'The writing style to use.',
+          },
+          context: {
+            type: 'string',
+            description: 'The full context of the user request.',
+          },
+        },
+        required: ['topic', 'length', 'style', 'context'],
+        additionalProperties: false,
+      },
+      execute: async (input: any) => {
+        const { topic, length, style, context } = input;
+        
+        try {
+          const mcpResponse = await fetch('/api/mcp/notion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool: 'generateAndAddLongContent',
+              arguments: {
+                topic,
+                length,
+                style,
+                context,
+                targetPageId: '274a860b701080368183ce1111e68d65'
+              }
+            })
+          });
+
+          if (!mcpResponse.ok) {
+            throw new Error(`MCP request failed: ${mcpResponse.status}`);
+          }
+          
+          const mcpResult = await mcpResponse.json();
+          console.log('✍️ Rio - Long-Form Content Written:', { topic, length, style, success: mcpResult.success });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'rio',
+                action: `Wrote long-form content about: ${topic}`,
+                status: 'completed',
+                data: mcpResult
+              }
+            }));
+          }
+          
+          return mcpResult;
+          
+        } catch (error) {
+          console.error('❌ Error writing long-form content:', error);
+          return { error: 'Failed to write long-form content', topic, fallback: true };
+        }
+      },
+    }),
+
+    tool({
+      name: 'resetMemory',
+      description: 'Completely clears the Notion page to reset the agent memory.',
+      parameters: {
+        type: 'object',
+        properties: {
+          confirmation: {
+            type: 'string',
+            description: 'Confirmation from the user to clear everything.',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any) => {
+        try {
+          const mcpResponse = await fetch('/api/mcp/notion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool: 'deleteAllPageContent', // Reuses the existing tool
+              arguments: {
+                context: 'User requested a memory reset.',
+                targetPageId: '274a860b701080368183ce1111e68d65'
+              }
+            })
+          });
+
+          if (!mcpResponse.ok) {
+            throw new Error(`MCP request failed: ${mcpResponse.status}`);
+          }
+          
+          const mcpResult = await mcpResponse.json();
+          console.log('🧠 Rio - Memory Reset:', { success: mcpResult.success });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('agentActivity', {
+              detail: {
+                agentId: 'rio',
+                action: 'Memory completely reset.',
+                status: 'completed',
+                data: mcpResult
+              }
+            }));
+          }
+          
+          return mcpResult;
+          
+        } catch (error) {
+          console.error('❌ Error resetting memory:', error);
+          return { error: 'Failed to reset memory', fallback: true };
         }
       },
     }),
