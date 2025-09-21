@@ -484,6 +484,7 @@ function App({ children }: { children: React.ReactNode }) {
         onCodecChange={handleCodecChange}
         isTranscriptVisible={isTranscriptVisible}
         setIsTranscriptVisible={setIsTranscriptVisible}
+        isExpanded={isExpanded}
       />
     </div>
   );
