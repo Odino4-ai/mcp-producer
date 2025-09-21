@@ -40,7 +40,7 @@ import NotionEmbed from "./components/NotionEmbed";
 const WORKSPACE_VERSION_KEY = 'workspace_version';
 const MEDICAL_RESEARCH_VERSION = 'medical_research_v1';
 
-function App({ children }: { children: React.ReactNode }) {
+function App() {
   const searchParams = useSearchParams()!;
   const [isExpanded, setIsExpanded] = useState(false);
 
