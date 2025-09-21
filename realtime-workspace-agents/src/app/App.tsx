@@ -32,6 +32,7 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
+import NotionEmbed from "./components/NotionEmbed";
 // Removed unused import from 'domain' and legacy design guardrail; see guardrails.ts for createResearchGuardrail if needed.
 // import { createResearchGuardrail } from "./agentConfigs/workspaceBuilder/guardrails";
 
@@ -41,6 +42,7 @@ const MEDICAL_RESEARCH_VERSION = 'medical_research_v1';
 
 function App({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()!;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // One-time migration: when scenario is workspaceBuilder (investment research) ensure workspace state is versioned.
   React.useEffect(() => {
@@ -442,7 +444,7 @@ function App({ children }: { children: React.ReactNode }) {
   }, [isTranscriptVisible]);
 
   return (
-    <div className="text-base flex flex-col h-screen bg-background text-gray-800 relative">
+    <div className="text-base flex flex-col inset-0 fixed bg-background text-gray-800">
       <div className="p-5 text-lg font-semibold flex justify-between items-center">
         <div
           className="flex text-primary items-center cursor-pointer"
@@ -463,7 +465,7 @@ function App({ children }: { children: React.ReactNode }) {
           canSend={sessionStatus === "CONNECTED"}
           isVisible={isTranscriptVisible}
         />
-        {children}
+        <NotionEmbed isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
       </div>
 
       <BottomToolbar
