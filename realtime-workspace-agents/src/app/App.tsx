@@ -42,6 +42,7 @@ const MEDICAL_RESEARCH_VERSION = 'medical_research_v1';
 
 function App({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()!;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // One-time migration: when scenario is workspaceBuilder (investment research) ensure workspace state is versioned.
   React.useEffect(() => {
@@ -464,7 +465,7 @@ function App({ children }: { children: React.ReactNode }) {
           canSend={sessionStatus === "CONNECTED"}
           isVisible={isTranscriptVisible}
         />
-        <NotionEmbed />
+        <NotionEmbed isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
       </div>
 
       <BottomToolbar
