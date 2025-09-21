@@ -5,7 +5,11 @@ import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/types";
 import Image from "next/image";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
-import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
+import {
+  DownloadIcon,
+  ClipboardCopyIcon,
+  ArrowUpIcon,
+} from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
 
 export interface TranscriptProps {
@@ -76,23 +80,23 @@ function Transcript({
     <div
       className={
         (isVisible ? "w-1/2 overflow-auto" : "w-0 overflow-hidden opacity-0") +
-        " transition-all rounded-xl duration-200 ease-in-out flex-col bg-white min-h-0 flex"
+        " transition-all rounded-xl duration-200 ease-in-out flex-col bg-background min-h-0 flex ring-1 ring-border"
       }
     >
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base border-b bg-white rounded-t-xl">
-          <span className="font-semibold">Transcript</span>
+        <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base border-b border-border bg-card rounded-t-xl">
+          <span className="font-semibold text-card-foreground">Transcript</span>
           <div className="flex gap-x-2">
             <button
               onClick={handleCopyTranscript}
-              className="w-24 text-sm px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 flex items-center justify-center gap-x-1"
+              className="w-24 text-sm px-3 py-1 rounded-md bg-secondary hover:bg-secondary/80 text-secondary-foreground flex items-center justify-center gap-x-1 transition-colors"
             >
               <ClipboardCopyIcon />
               {justCopied ? "Copied!" : "Copy"}
             </button>
             <button
               onClick={downloadRecording}
-              className="w-40 text-sm px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 flex items-center justify-center gap-x-1"
+              className="w-40 text-sm px-3 py-1 rounded-md bg-secondary hover:bg-secondary/80 text-secondary-foreground flex items-center justify-center gap-x-1 transition-colors"
             >
               <DownloadIcon />
               <span>Download Audio</span>
@@ -120,104 +124,108 @@ function Transcript({
                 guardrailResult,
               } = item;
 
-            if (isHidden) {
-              return null;
-            }
+              if (isHidden) {
+                return null;
+              }
 
-            if (type === "MESSAGE") {
-              const isUser = role === "user";
-              const containerClasses = `flex justify-end flex-col ${
-                isUser ? "items-end" : "items-start"
-              }`;
-              const bubbleBase = `max-w-lg p-3 ${
-                isUser ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-black"
-              }`;
-              const isBracketedMessage =
-                title.startsWith("[") && title.endsWith("]");
-              const messageStyle = isBracketedMessage
-                ? 'italic text-gray-400'
-                : '';
-              const displayTitle = isBracketedMessage
-                ? title.slice(1, -1)
-                : title;
+              if (type === "MESSAGE") {
+                const isUser = role === "user";
+                const containerClasses = `flex justify-end flex-col ${
+                  isUser ? "items-end" : "items-start"
+                }`;
+                const bubbleBase = `max-w-lg p-3 ${
+                  isUser
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`;
+                const isBracketedMessage =
+                  title.startsWith("[") && title.endsWith("]");
+                const messageStyle = isBracketedMessage
+                  ? "italic text-muted-foreground"
+                  : "";
+                const displayTitle = isBracketedMessage
+                  ? title.slice(1, -1)
+                  : title;
 
-              return (
-                <div key={itemId} className={containerClasses}>
-                  <div className="max-w-lg">
-                    <div
-                      className={`${bubbleBase} rounded-t-xl ${
-                        guardrailResult ? "" : "rounded-b-xl"
-                      }`}
-                    >
+                return (
+                  <div key={itemId} className={containerClasses}>
+                    <div className="max-w-lg">
                       <div
-                        className={`text-xs ${
-                          isUser ? "text-gray-400" : "text-gray-500"
-                        } font-mono`}
-                      >
-                        {timestamp}
-                      </div>
-                      <div className={`whitespace-pre-wrap ${messageStyle}`}>
-                        <ReactMarkdown>{displayTitle}</ReactMarkdown>
-                      </div>
-                    </div>
-                    {guardrailResult && (
-                      <div className="bg-gray-200 px-3 py-2 rounded-b-xl">
-                        <GuardrailChip guardrailResult={guardrailResult} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            } else if (type === "BREADCRUMB") {
-              return (
-                <div
-                  key={itemId}
-                  className="flex flex-col justify-start items-start text-gray-500 text-sm"
-                >
-                  <span className="text-xs font-mono">{timestamp}</span>
-                  <div
-                    className={`whitespace-pre-wrap flex items-center font-mono text-sm text-gray-800 ${
-                      data ? "cursor-pointer" : ""
-                    }`}
-                    onClick={() => data && toggleTranscriptItemExpand(itemId)}
-                  >
-                    {data && (
-                      <span
-                        className={`text-gray-400 mr-1 transform transition-transform duration-200 select-none font-mono ${
-                          expanded ? "rotate-90" : "rotate-0"
+                        className={`${bubbleBase} rounded-t-xl ${
+                          guardrailResult ? "" : "rounded-b-xl"
                         }`}
                       >
-                        ▶
-                      </span>
-                    )}
-                    {title}
-                  </div>
-                  {expanded && data && (
-                    <div className="text-gray-800 text-left">
-                      <pre className="border-l-2 ml-1 border-gray-200 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
-                        {JSON.stringify(data, null, 2)}
-                      </pre>
+                        <div
+                          className={`text-xs ${
+                            isUser
+                              ? "text-primary-foreground/70"
+                              : "text-muted-foreground/70"
+                          } font-mono`}
+                        >
+                          {timestamp}
+                        </div>
+                        <div className={`whitespace-pre-wrap ${messageStyle}`}>
+                          <ReactMarkdown>{displayTitle}</ReactMarkdown>
+                        </div>
+                      </div>
+                      {guardrailResult && (
+                        <div className="bg-muted px-3 py-2 rounded-b-xl">
+                          <GuardrailChip guardrailResult={guardrailResult} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            } else {
-              // Fallback if type is neither MESSAGE nor BREADCRUMB
-              return (
-                <div
-                  key={itemId}
-                  className="flex justify-center text-gray-500 text-sm italic font-mono"
-                >
-                  Unknown item type: {type}{" "}
-                  <span className="ml-2 text-xs">{timestamp}</span>
-                </div>
-              );
-            }
-          })}
+                  </div>
+                );
+              } else if (type === "BREADCRUMB") {
+                return (
+                  <div
+                    key={itemId}
+                    className="flex flex-col justify-start items-start text-muted-foreground text-sm"
+                  >
+                    <span className="text-xs font-mono">{timestamp}</span>
+                    <div
+                      className={`whitespace-pre-wrap flex items-center font-mono text-sm text-foreground ${
+                        data ? "cursor-pointer" : ""
+                      }`}
+                      onClick={() => data && toggleTranscriptItemExpand(itemId)}
+                    >
+                      {data && (
+                        <span
+                          className={`text-muted-foreground mr-1 transform transition-transform duration-200 select-none font-mono ${
+                            expanded ? "rotate-90" : "rotate-0"
+                          }`}
+                        >
+                          ▶
+                        </span>
+                      )}
+                      {title}
+                    </div>
+                    {expanded && data && (
+                      <div className="text-foreground text-left">
+                        <pre className="border-l-2 ml-1 border-border whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
+                          {JSON.stringify(data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                );
+              } else {
+                // Fallback if type is neither MESSAGE nor BREADCRUMB
+                return (
+                  <div
+                    key={itemId}
+                    className="flex justify-center text-muted-foreground text-sm italic font-mono"
+                  >
+                    Unknown item type: {type}{" "}
+                    <span className="ml-2 text-xs">{timestamp}</span>
+                  </div>
+                );
+              }
+            })}
         </div>
       </div>
 
-      <div className="p-4 flex items-center gap-x-2 flex-shrink-0 border-t border-gray-200">
+      <div className="p-4 flex items-center gap-x-2 flex-shrink-0 border-t border-border">
         <input
           ref={inputRef}
           type="text"
@@ -228,15 +236,15 @@ function Transcript({
               onSendMessage();
             }
           }}
-          className="flex-1 px-4 py-2 focus:outline-none"
+          className="flex-1 px-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring text-foreground placeholder:text-muted-foreground"
           placeholder="Type a message..."
         />
         <button
           onClick={onSendMessage}
           disabled={!canSend || !userText.trim()}
-          className="bg-gray-900 text-white rounded-full px-2 py-2 disabled:opacity-50"
+          className="bg-primary text-primary-foreground rounded-full px-2 py-2 disabled:opacity-50 hover:bg-primary/90 transition-colors"
         >
-          <Image src="arrow.svg" alt="Send" width={24} height={24} />
+          <ArrowUpIcon />
         </button>
       </div>
     </div>
