@@ -14,18 +14,23 @@ import { Cross1Icon, EnterFullScreenIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-function NotionEmbed() {
+function NotionEmbed({
+  isExpanded,
+  setIsExpanded,
+}: {
+  isExpanded: boolean;
+  setIsExpanded: (val: boolean) => void;
+}) {
   // Default Notion page URL if none provided
   const [recordMap, setRecordMap] = useState<ExtendedRecordMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Refs for smart scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isUserScrollingRef = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastContentRef = useRef<string>('');
+  const lastContentRef = useRef<string>("");
 
   // Extract page ID from the URL you provided
   // const defaultPageId = "Development-Projects-274a860b701080368183ce1111e68d65";
@@ -49,13 +54,14 @@ function NotionEmbed() {
       forceScrollToBottom();
     }
   };
-  
+
   // Handle user scroll
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const { scrollTop, scrollHeight, clientHeight } =
+        scrollContainerRef.current;
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 10; // Increased tolerance
-      
+
       if (!isAtBottom) {
         isUserScrollingRef.current = true;
         if (scrollTimeoutRef.current) {
@@ -93,12 +99,12 @@ function NotionEmbed() {
 
         const data: ExtendedRecordMap = await response.json();
         const newContentHash = JSON.stringify(data);
-        
+
         // Check if content has actually changed
         if (newContentHash !== lastContentRef.current) {
           setRecordMap(data);
           lastContentRef.current = newContentHash;
-          
+
           // Always scroll to bottom when new content appears
           setTimeout(forceScrollToBottom, 150);
         } else if (!recordMap) {
@@ -107,7 +113,6 @@ function NotionEmbed() {
           lastContentRef.current = newContentHash;
           setTimeout(forceScrollToBottom, 150);
         }
-        
       } catch (err) {
         console.error("Error fetching Notion page:", err);
         setError("Failed to load Notion page");
@@ -118,17 +123,17 @@ function NotionEmbed() {
 
     fetchNotionPage();
     const interval = setInterval(fetchNotionPage, 3000); // repeat every 3s
-    
+
     // Add scroll listener
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
+      scrollContainer.addEventListener("scroll", handleScroll);
     }
-    
+
     return () => {
       clearInterval(interval); // cleanup
       if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
+        scrollContainer.removeEventListener("scroll", handleScroll);
       }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -143,7 +148,7 @@ function NotionEmbed() {
       const timer = setTimeout(() => {
         forceScrollToBottom();
       }, 200);
-      
+
       return () => clearTimeout(timer);
     }
   }, [recordMap]);
