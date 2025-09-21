@@ -42,7 +42,7 @@ const MEDICAL_RESEARCH_VERSION = 'medical_research_v1';
 
 function App() {
   const searchParams = useSearchParams()!;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // One-time migration: when scenario is workspaceBuilder (investment research) ensure workspace state is versioned.
   React.useEffect(() => {
