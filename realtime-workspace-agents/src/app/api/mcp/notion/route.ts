@@ -1442,6 +1442,97 @@ class NotionMCPClient {
       };
     }
   }
+
+  async generateAndAddLongContent(args: any): Promise<MCPResponse> {
+    const { topic, length, style, context } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+
+    try {
+      console.log(`✍️ Generating long-form content: "${topic}"`);
+
+      // 1. Call OpenAI API to generate the content
+      // NOTE: This requires OPENAI_API_KEY to be set in your environment
+      const openaiApiKey = process.env.OPENAI_API_KEY;
+      if (!openaiApiKey) {
+        throw new Error('OPENAI_API_KEY is not configured for content generation');
+      }
+
+      const generationPrompt = `
+        You are an expert writer. Your task is to write a piece of long-form content based on the following request.
+        Topic: "${topic}"
+        Approximate Length: ${length} lines
+        Writing Style: ${style}
+        User Context: "${context}"
+        
+        Please generate the content now.
+      `;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-davinci-003', // A powerful model for long-form content
+          prompt: generationPrompt,
+          max_tokens: length * 50, // Estimate tokens based on lines
+          temperature: 0.7,
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const error = await openaiResponse.json();
+        throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
+      }
+
+      const openaiResult = await openaiResponse.json();
+      const generatedText = openaiResult.choices[0].text.trim();
+
+      // 2. Add the generated content to the Notion page
+      const newContent = [
+        {
+          "object": "block",
+          "type": "heading_2",
+          "heading_2": { "rich_text": [{ "type": "text", "text": { "content": `✍️ ${topic}` } }] }
+        },
+        {
+          "object": "block",
+          "type": "paragraph",
+          "paragraph": { "rich_text": [{ "type": "text", "text": { "content": generatedText } }] }
+        },
+        {
+          "object": "block",
+          "type": "paragraph",
+          "paragraph": { "rich_text": [{ "type": "text", "text": { "content": `Generated at ${new Date().toLocaleString()}` }, "annotations": { "italic": true, "color": "gray" } }] }
+        }
+      ];
+
+      await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+        children: newContent
+      });
+
+      console.log(`✅ Successfully generated and added long-form content`);
+
+      return {
+        success: true,
+        data: {
+          action: 'LONG_CONTENT_ADDED',
+          topic,
+          length: generatedText.split('\n').length,
+          style,
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+    } catch (error) {
+      console.error('❌ Error generating long-form content:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
 }
 
 // Instance du client MCP
@@ -1500,6 +1591,10 @@ export async function POST(request: NextRequest) {
         
       case 'addTableToPage':
         result = await mcpClient.addTableToPage(args);
+        break;
+        
+      case 'generateAndAddLongContent':
+        result = await mcpClient.generateAndAddLongContent(args);
         break;
         
       default:
