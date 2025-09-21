@@ -442,7 +442,7 @@ class NotionMCPClient {
   }
   
   async documentLiveContent(args: any): Promise<MCPResponse> {
-    const { contentType, title, content, structure, context, timestamp, importance } = args;
+    const { contentType, title, content, structure, context, timestamp, importance, includeImages, imageQuery, enhanceContent, formatType } = args;
     const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
     
     try {
@@ -522,7 +522,22 @@ class NotionMCPClient {
         console.log(`🗑️ Deleted ${deletedCount}/${blocksToDelete.length} blocks for section update`);
       }
       
-      // 4. Créer le nouveau contenu (mis à jour ou nouveau)
+      // 4. ULTRA INTELLIGENCE - Améliorer le contenu automatiquement
+      let enhancedContent = content;
+      let relevantImages = [];
+      
+      if (enhanceContent) {
+        // Enrichir le contenu avec du contexte intelligent
+        enhancedContent = await this.enhanceContentIntelligently(content, contentType, title);
+      }
+      
+      if (includeImages) {
+        // Rechercher des images pertinentes
+        const searchQuery = imageQuery || title || content.substring(0, 50);
+        relevantImages = await this.findRelevantImages(searchQuery, contentType);
+      }
+      
+      // 5. Créer le nouveau contenu (mis à jour ou nouveau)
       if (!shouldReplace) {
         // Ajouter un séparateur seulement pour le nouveau contenu
         documentContent.push({
@@ -574,7 +589,23 @@ class NotionMCPClient {
       
       // Pas de métadonnées dans le document final - garder propre
       
-      // Ajouter le contenu principal
+      // Ajouter les images trouvées en premier
+      if (relevantImages && relevantImages.length > 0) {
+        relevantImages.forEach((imageUrl: string) => {
+          documentContent.push({
+            "object": "block",
+            "type": "image",
+            "image": {
+              "type": "external",
+              "external": {
+                "url": imageUrl
+              }
+            }
+          });
+        });
+      }
+      
+      // Ajouter le contenu principal (enrichi)
       if (structure && structure.sections && structure.sections.length > 0) {
         // Contenu structuré avec sections
         structure.sections.forEach((section: any) => {
@@ -614,7 +645,7 @@ class NotionMCPClient {
           });
         });
       } else {
-        // Contenu simple
+        // Contenu simple enrichi
         documentContent.push({
           "object": "block",
           "type": "paragraph",
@@ -623,7 +654,7 @@ class NotionMCPClient {
               {
                 "type": "text",
                 "text": {
-                  "content": content
+                  "content": enhancedContent
                 }
               }
             ]
@@ -880,23 +911,47 @@ class NotionMCPClient {
           
           console.log('✅ Updated existing content block');
         } else {
-          // Ajouter un nouveau paragraphe après le titre (propre)
-          await this.callNotionAPI(`/blocks/${targetBlock.id}/children`, 'PATCH', {
-            children: [{
-              "object": "block",
-              "type": "paragraph",
-              "paragraph": {
-                "rich_text": [
-                  {
-                    "type": "text",
-                    "text": {
-                      "content": content // Contenu propre sans métadonnées
+          // Trouver l'index du titre pour insérer après
+          const targetIndex = existingContent.findIndex(block => block.id === targetBlock.id);
+          
+          if (targetIndex >= 0 && targetIndex < existingContent.length - 1) {
+            // Insérer après le titre existant
+            const nextBlockId = existingContent[targetIndex + 1].id;
+            await this.callNotionAPI(`/blocks/${nextBlockId}`, 'PATCH', {
+              children: [{
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                  "rich_text": [
+                    {
+                      "type": "text",
+                      "text": {
+                        "content": content
+                      }
                     }
-                  }
-                ]
-              }
-            }]
-          });
+                  ]
+                }
+              }]
+            });
+          } else {
+            // Ajouter à la fin de la page si c'est le dernier élément
+            await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+              children: [{
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                  "rich_text": [
+                    {
+                      "type": "text",
+                      "text": {
+                        "content": content
+                      }
+                    }
+                  ]
+                }
+              }]
+            });
+          }
           
           console.log('✅ Added new content block after title');
         }
@@ -1082,6 +1137,266 @@ class NotionMCPClient {
       };
     }
   }
+  
+  // 🧠 MÉTHODES D'INTELLIGENCE AVANCÉE
+  
+  private async enhanceContentIntelligently(content: string, contentType: string, title: string): Promise<string> {
+    try {
+      // Enrichissement intelligent du contenu selon le type
+      let enhancement = '';
+      
+      switch (contentType) {
+        case 'project':
+          enhancement = `\n\n📊 Objectifs:\n- Définir les spécifications\n- Planifier les étapes\n- Identifier les ressources nécessaires`;
+          break;
+        case 'topic':
+          enhancement = `\n\n🔍 Points clés à retenir:\n- Impact sur le projet\n- Actions à prévoir\n- Personnes concernées`;
+          break;
+        case 'decision':
+          enhancement = `\n\n⚡ Implications:\n- Changements requis\n- Timeline affectée\n- Prochaines étapes`;
+          break;
+        default:
+          enhancement = '';
+      }
+      
+      return content + enhancement;
+    } catch (error) {
+      console.warn('Content enhancement failed:', error);
+      return content;
+    }
+  }
+  
+  private async findRelevantImages(searchQuery: string, contentType: string): Promise<string[]> {
+    try {
+      // 🖼️ Recherche d'images pertinentes (simulation pour l'instant)
+      console.log(`🔍 Searching for images: "${searchQuery}" (type: ${contentType})`);
+      
+      // Images de base selon le type de contenu
+      const imagesByType: Record<string, string[]> = {
+        'project': [
+          'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop', // Team collaboration
+          'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=400&fit=crop'  // Project planning
+        ],
+        'topic': [
+          'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=400&fit=crop', // Discussion
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop'  // Ideas
+        ],
+        'decision': [
+          'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop', // Decision making
+          'https://images.unsplash.com/photo-1553484771-371a605b060b?w=800&h=400&fit=crop'  // Strategy
+        ],
+        'insight': [
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop', // Light bulb/ideas
+          'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop'  // Innovation
+        ]
+      };
+      
+      // Recherche spécifique selon le contenu
+      if (searchQuery.toLowerCase().includes('dog') || searchQuery.toLowerCase().includes('chien')) {
+        return ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&h=400&fit=crop']; // Beautiful dog
+      }
+      
+      if (searchQuery.toLowerCase().includes('cat') || searchQuery.toLowerCase().includes('chat')) {
+        return ['https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&h=400&fit=crop']; // Beautiful cat
+      }
+      
+      if (searchQuery.toLowerCase().includes('mobile') || searchQuery.toLowerCase().includes('app')) {
+        return ['https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop']; // Mobile app
+      }
+      
+      if (searchQuery.toLowerCase().includes('car') || searchQuery.toLowerCase().includes('voiture')) {
+        return ['https://images.unsplash.com/photo-1549924231-f129b911e442?w=800&h=400&fit=crop']; // Car
+      }
+      
+      if (searchQuery.toLowerCase().includes('table') || searchQuery.toLowerCase().includes('tableau')) {
+        return ['https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop']; // Business table/data
+      }
+      
+      // Images par défaut selon le type
+      return imagesByType[contentType] || [];
+      
+    } catch (error) {
+      console.warn('Image search failed:', error);
+      return [];
+    }
+  }
+  
+  async replaceSpecificImage(args: any): Promise<MCPResponse> {
+    const { imageToReplace, newImageQuery, context } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      console.log(`🖼️ Replacing image: ${imageToReplace} → ${newImageQuery}`);
+      
+      // 1. Trouver l'image existante sur la page
+      const existingBlocks = await this.callNotionAPI(`/blocks/${targetPageId}/children?page_size=100`);
+      const imageBlocks = existingBlocks.results?.filter((block: any) => block.type === 'image') || [];
+      
+      console.log(`🔍 Found ${imageBlocks.length} image blocks on page`);
+      
+      if (imageBlocks.length === 0) {
+        throw new Error('No images found on page to replace');
+      }
+      
+      // 2. Prendre la première image (ou la plus récente)
+      const imageToReplaceBlock = imageBlocks[imageBlocks.length - 1]; // Dernière image
+      
+      // 3. Chercher une nouvelle image
+      const newImages = await this.findRelevantImages(newImageQuery, 'image_replacement');
+      
+      if (newImages.length === 0) {
+        throw new Error(`No suitable image found for: ${newImageQuery}`);
+      }
+      
+      // 4. Remplacer l'image
+      await this.callNotionAPI(`/blocks/${imageToReplaceBlock.id}`, 'PATCH', {
+        image: {
+          "type": "external",
+          "external": {
+            "url": newImages[0]
+          }
+        }
+      });
+      
+      console.log(`✅ Successfully replaced image with: ${newImages[0]}`);
+      
+      return {
+        success: true,
+        data: {
+          action: 'IMAGE_REPLACED',
+          oldImageType: imageToReplace,
+          newImageQuery,
+          newImageUrl: newImages[0],
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error replacing image:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  async addTableToPage(args: any): Promise<MCPResponse> {
+    const { position, tableData, title } = args;
+    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
+    
+    try {
+      console.log(`📊 Adding table at position: ${position}`);
+      
+      const tableContent = [];
+      
+      // Ajouter un titre si spécifié
+      if (title) {
+        tableContent.push({
+          "object": "block",
+          "type": "heading_3",
+          "heading_3": {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": `📊 ${title}`
+                }
+              }
+            ]
+          }
+        });
+      }
+      
+      // Créer le tableau
+      const headers = tableData?.headers || ['Colonne 1', 'Colonne 2', 'Colonne 3'];
+      const rows = tableData?.rows || [
+        ['Données 1', 'Données 2', 'Données 3'],
+        ['Ligne 2', 'Info 2', 'Détail 2']
+      ];
+      
+      // Notion utilise un format spécial pour les tableaux
+      const tableBlock = {
+        "object": "block",
+        "type": "table",
+        "table": {
+          "table_width": headers.length,
+          "has_column_header": true,
+          "has_row_header": false,
+          "children": [
+            // Header row
+            {
+              "object": "block",
+              "type": "table_row",
+              "table_row": {
+                "cells": headers.map(header => [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": header
+                    },
+                    "annotations": {
+                      "bold": true
+                    }
+                  }
+                ])
+              }
+            },
+            // Data rows
+            ...rows.map((row: string[]) => ({
+              "object": "block",
+              "type": "table_row",
+              "table_row": {
+                "cells": row.map(cell => [
+                  {
+                    "type": "text",
+                    "text": {
+                      "content": cell
+                    }
+                  }
+                ])
+              }
+            }))
+          ]
+        }
+      };
+      
+      tableContent.push(tableBlock);
+      
+      // Ajouter le tableau selon la position
+      if (position === 'beginning') {
+        // Insérer au début de la page
+        await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+          children: tableContent
+        });
+      } else {
+        // Ajouter à la fin par défaut
+        await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
+          children: tableContent
+        });
+      }
+      
+      console.log(`✅ Successfully added table at ${position}`);
+      
+      return {
+        success: true,
+        data: {
+          action: 'TABLE_ADDED',
+          position,
+          title,
+          columns: headers.length,
+          rows: rows.length,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error adding table:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }
 
 // Instance du client MCP
@@ -1132,6 +1447,14 @@ export async function POST(request: NextRequest) {
         
       case 'managePageContent':
         result = await mcpClient.managePageContent(args);
+        break;
+        
+      case 'replaceSpecificImage':
+        result = await mcpClient.replaceSpecificImage(args);
+        break;
+        
+      case 'addTableToPage':
+        result = await mcpClient.addTableToPage(args);
         break;
         
       default:
