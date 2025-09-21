@@ -66,9 +66,9 @@ function NotionEmbed() {
     <div
       className={cn(
         isExpanded
-          ? "fixed inset-0 z-50"
+          ? "fixed inset-0 top-[68px] z-50"
           : "w-1/2 overflow-auto transition-all rounded-xl duration-200 ease-in-out flex-col bg-white",
-        "bg-background"
+        "bg-background ring-1 ring-border z-10"
       )}
     >
       {isExpanded ? (
