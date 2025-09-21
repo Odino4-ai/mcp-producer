@@ -32,6 +32,7 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
+import NotionEmbed from "./components/NotionEmbed";
 // Removed unused import from 'domain' and legacy design guardrail; see guardrails.ts for createResearchGuardrail if needed.
 // import { createResearchGuardrail } from "./agentConfigs/workspaceBuilder/guardrails";
 
@@ -463,7 +464,7 @@ function App({ children }: { children: React.ReactNode }) {
           canSend={sessionStatus === "CONNECTED"}
           isVisible={isTranscriptVisible}
         />
-        {children}
+        <NotionEmbed />
       </div>
 
       <BottomToolbar
