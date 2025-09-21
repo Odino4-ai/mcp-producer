@@ -51,15 +51,16 @@ function BottomToolbar({
   }
 
   function getConnectionButtonClasses() {
-    const baseClasses = "text-white text-base p-2 w-36 rounded-md h-full";
+    const baseClasses =
+      "text-base p-2 w-36 rounded-md h-full transition-colors";
     const cursorClass = isConnecting ? "cursor-not-allowed" : "cursor-pointer";
 
     if (isConnected) {
-      // Connected -> label "Disconnect" -> red
-      return `bg-red-600 hover:bg-red-700 ${cursorClass} ${baseClasses}`;
+      // Connected -> label "Disconnect" -> destructive variant
+      return `bg-destructive text-destructive-foreground hover:bg-destructive/90 ${cursorClass} ${baseClasses}`;
     }
-    // Disconnected or connecting -> label is either "Connect" or "Connecting" -> black
-    return `bg-black hover:bg-gray-900 ${cursorClass} ${baseClasses}`;
+    // Disconnected or connecting -> label is either "Connect" or "Connecting" -> primary variant
+    return `bg-primary text-primary-foreground hover:bg-primary/90 ${cursorClass} ${baseClasses}`;
   }
 
   return (
@@ -83,7 +84,7 @@ function BottomToolbar({
         />
         <label
           htmlFor="push-to-talk"
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer text-foreground"
         >
           Push to talk
         </label>
@@ -93,11 +94,13 @@ function BottomToolbar({
           onTouchStart={handleTalkButtonDown}
           onTouchEnd={handleTalkButtonUp}
           disabled={!isPTTActive}
-          className={
-            (isPTTUserSpeaking ? "bg-gray-300" : "bg-gray-200") +
-            " py-1 px-4 cursor-pointer rounded-md" +
-            (!isPTTActive ? " bg-gray-100 text-gray-400" : "")
-          }
+          className={`py-1 px-4 rounded-md transition-colors ${
+            !isPTTActive
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : isPTTUserSpeaking
+              ? "bg-accent text-accent-foreground cursor-pointer"
+              : "bg-secondary text-secondary-foreground cursor-pointer hover:bg-secondary/80"
+          }`}
         >
           Talk
         </button>
@@ -114,7 +117,7 @@ function BottomToolbar({
         />
         <label
           htmlFor="audio-playback"
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer text-foreground"
         >
           Audio playback
         </label>
@@ -128,7 +131,10 @@ function BottomToolbar({
           onChange={(e) => setIsEventsPaneExpanded(e.target.checked)}
           className="w-4 h-4"
         />
-        <label htmlFor="logs" className="flex items-center cursor-pointer">
+        <label
+          htmlFor="logs"
+          className="flex items-center cursor-pointer text-foreground"
+        >
           Logs
         </label>
       </div>
@@ -140,13 +146,16 @@ function BottomToolbar({
           onChange={(e) => setIsTranscriptVisible(e.target.checked)}
           className="w-4 h-4"
         />
-        <label htmlFor="transcript" className="flex items-center cursor-pointer">
+        <label
+          htmlFor="transcript"
+          className="flex items-center cursor-pointer text-foreground"
+        >
           Transcript
         </label>
       </div>
 
       <div className="flex flex-row items-center gap-2">
-        <div>Codec:</div>
+        <div className="text-foreground">Codec:</div>
         {/*
           Codec selector – Lets you force the WebRTC track to use 8 kHz 
           PCMU/PCMA so you can preview how the agent will sound 
@@ -159,7 +168,7 @@ function BottomToolbar({
           id="codec-select"
           value={codec}
           onChange={handleCodecChange}
-          className="border border-gray-300 rounded-md px-2 py-1 focus:outline-none cursor-pointer"
+          className="border border-input bg-background text-foreground rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer transition-colors"
         >
           <option value="opus">Opus (48 kHz)</option>
           <option value="pcmu">PCMU (8 kHz)</option>
