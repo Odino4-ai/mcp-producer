@@ -8,6 +8,7 @@ import Image from "next/image";
 // UI components
 import Transcript from "./components/Transcript";
 import BottomToolbar from "./components/BottomToolbar";
+import SoundVisualization from "./components/SoundVisualization";
 // Removed Workspace import (no longer used)
 
 // Types
@@ -466,6 +467,10 @@ function App() {
           isVisible={isTranscriptVisible}
         />
         <NotionEmbed isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+        <SoundVisualization
+          audioElement={audioElementRef.current}
+          isVisible={isExpanded && sessionStatus === "CONNECTED"}
+        />
       </div>
 
       <BottomToolbar
