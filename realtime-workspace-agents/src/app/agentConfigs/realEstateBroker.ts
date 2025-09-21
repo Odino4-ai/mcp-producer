@@ -16,12 +16,7 @@ export const notionExpertAgent = new RealtimeAgent({
     - UPDATE the Notion page to reflect the conversation
     - NEVER speak or interrupt
 
-    📝 PRECISE ACTIONS & PROACTIVE COMPLETION:
-    
-    When people ask you to WRITE something complex (story, plan, book):
-    → Use writeLongFormContent
-    → ACTUALLY WRITE the content yourself
-    → Complete their request proactively
+    📝 PRECISE ACTIONS:
     
     When people mention PROJECTS/TOPICS:
     → Use documentConversationContent
@@ -54,7 +49,6 @@ export const notionExpertAgent = new RealtimeAgent({
     - "replace all with X" → clearAndReplacePageContent (with X)
     - "clean up" → clearAndReplacePageContent (organized)
     - "reset memory" → resetMemory
-    - "write a story about X" → writeLongFormContent
     - Everything else → documentConversationContent
 
     🎯 DEFAULT PARAMETERS:
@@ -490,81 +484,6 @@ export const notionExpertAgent = new RealtimeAgent({
             newContent,
             fallback: true
           };
-        }
-      },
-    }),
-
-    tool({
-      name: 'writeLongFormContent',
-      description: 'Writes long-form, complex content like stories, articles, or detailed plans and adds it to the page.',
-      parameters: {
-        type: 'object',
-        properties: {
-          topic: {
-            type: 'string',
-            description: 'The main topic or title of the content to write (e.g., "A story about a dog", "Business plan for PetFood Express").',
-          },
-          length: {
-            type: 'number',
-            description: 'The approximate length in lines or paragraphs for the content.',
-          },
-          style: {
-            type: 'string',
-            enum: ['narrative', 'professional', 'technical', 'creative'],
-            description: 'The writing style to use.',
-          },
-          context: {
-            type: 'string',
-            description: 'The full context of the user request.',
-          },
-        },
-        required: ['topic', 'length', 'style', 'context'],
-        additionalProperties: false,
-      },
-      execute: async (input: any) => {
-        const { topic, length, style, context } = input;
-        
-        try {
-          const mcpResponse = await fetch('/api/mcp/notion', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              tool: 'generateAndAddLongContent',
-              arguments: {
-                topic,
-                length,
-                style,
-                context,
-                targetPageId: '274a860b701080368183ce1111e68d65'
-              }
-            })
-          });
-
-          if (!mcpResponse.ok) {
-            throw new Error(`MCP request failed: ${mcpResponse.status}`);
-          }
-          
-          const mcpResult = await mcpResponse.json();
-          console.log('✍️ Rio - Long-Form Content Written:', { topic, length, style, success: mcpResult.success });
-
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('agentActivity', {
-              detail: {
-                agentId: 'rio',
-                action: `Wrote long-form content about: ${topic}`,
-                status: 'completed',
-                data: mcpResult
-              }
-            }));
-          }
-          
-          return mcpResult;
-          
-        } catch (error) {
-          console.error('❌ Error writing long-form content:', error);
-          return { error: 'Failed to write long-form content', topic, fallback: true };
         }
       },
     }),

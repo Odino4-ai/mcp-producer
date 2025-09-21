@@ -1175,19 +1175,38 @@ class NotionMCPClient {
       const imagesByType: Record<string, string[]> = {
         'project': [
           'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop', // Team collaboration
-          'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=400&fit=crop'  // Project planning
+          'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=400&fit=crop', // Project planning
+          'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=400&fit=crop', // Team meeting
+          'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop', // Collaboration
+          'https://images.unsplash.com/photo-1553484771-047a44eee27b?w=800&h=400&fit=crop'  // Project management
         ],
         'topic': [
           'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=400&fit=crop', // Discussion
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop'  // Ideas
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop', // Ideas
+          'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop', // Brainstorming
+          'https://images.unsplash.com/photo-1553484771-8b5b2b6e1b8c?w=800&h=400&fit=crop'  // Communication
         ],
         'decision': [
           'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop', // Decision making
-          'https://images.unsplash.com/photo-1553484771-371a605b060b?w=800&h=400&fit=crop'  // Strategy
+          'https://images.unsplash.com/photo-1553484771-371a605b060b?w=800&h=400&fit=crop', // Strategy
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&h=400&fit=crop', // Leadership
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop'  // Analysis
         ],
         'insight': [
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop', // Light bulb/ideas
-          'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop'  // Innovation
+          'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop', // Innovation
+          'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop', // Creativity
+          'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop'  // Research
+        ],
+        'technology': [
+          'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=400&fit=crop', // Technology
+          'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop', // Innovation
+          'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=400&fit=crop'  // Coding
+        ],
+        'business': [
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop', // Business
+          'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop', // Analytics
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&h=400&fit=crop'  // Growth
         ]
       };
       
@@ -1210,6 +1229,94 @@ class NotionMCPClient {
       
       if (searchQuery.toLowerCase().includes('table') || searchQuery.toLowerCase().includes('tableau')) {
         return ['https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop']; // Business table/data
+      }
+      
+      if (searchQuery.toLowerCase().includes('nature') || searchQuery.toLowerCase().includes('forest')) {
+        return ['https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop']; // Forest
+      }
+      
+      if (searchQuery.toLowerCase().includes('ocean') || searchQuery.toLowerCase().includes('sea')) {
+        return ['https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=400&fit=crop']; // Ocean
+      }
+      
+      if (searchQuery.toLowerCase().includes('mountain') || searchQuery.toLowerCase().includes('montagne')) {
+        return ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop']; // Mountain
+      }
+      
+      if (searchQuery.toLowerCase().includes('city') || searchQuery.toLowerCase().includes('ville')) {
+        return ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=400&fit=crop']; // City skyline
+      }
+      
+      if (searchQuery.toLowerCase().includes('food') || searchQuery.toLowerCase().includes('nourriture')) {
+        return ['https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=400&fit=crop']; // Food
+      }
+      
+      if (searchQuery.toLowerCase().includes('coffee') || searchQuery.toLowerCase().includes('café')) {
+        return ['https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop']; // Coffee
+      }
+      
+      if (searchQuery.toLowerCase().includes('book') || searchQuery.toLowerCase().includes('livre')) {
+        return ['https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop']; // Books
+      }
+      
+      if (searchQuery.toLowerCase().includes('music') || searchQuery.toLowerCase().includes('musique')) {
+        return ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop']; // Music
+      }
+      
+      if (searchQuery.toLowerCase().includes('art') || searchQuery.toLowerCase().includes('artistic')) {
+        return ['https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=400&fit=crop']; // Art
+      }
+      
+      if (searchQuery.toLowerCase().includes('travel') || searchQuery.toLowerCase().includes('voyage')) {
+        return ['https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=400&fit=crop']; // Travel
+      }
+      
+      if (searchQuery.toLowerCase().includes('sport') || searchQuery.toLowerCase().includes('fitness')) {
+        return ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop']; // Sports
+      }
+      
+      if (searchQuery.toLowerCase().includes('home') || searchQuery.toLowerCase().includes('maison')) {
+        return ['https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&h=400&fit=crop']; // Home interior
+      }
+      
+      if (searchQuery.toLowerCase().includes('garden') || searchQuery.toLowerCase().includes('jardin')) {
+        return ['https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=400&fit=crop']; // Garden
+      }
+      
+      if (searchQuery.toLowerCase().includes('beach') || searchQuery.toLowerCase().includes('plage')) {
+        return ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=400&fit=crop']; // Beach
+      }
+      
+      if (searchQuery.toLowerCase().includes('sunset') || searchQuery.toLowerCase().includes('coucher')) {
+        return ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop']; // Sunset
+      }
+      
+      if (searchQuery.toLowerCase().includes('flower') || searchQuery.toLowerCase().includes('fleur')) {
+        return ['https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&h=400&fit=crop']; // Flowers
+      }
+      
+      if (searchQuery.toLowerCase().includes('space') || searchQuery.toLowerCase().includes('espace')) {
+        return ['https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=400&fit=crop']; // Space
+      }
+      
+      if (searchQuery.toLowerCase().includes('architecture') || searchQuery.toLowerCase().includes('building')) {
+        return ['https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=400&fit=crop']; // Architecture
+      }
+      
+      if (searchQuery.toLowerCase().includes('health') || searchQuery.toLowerCase().includes('santé')) {
+        return ['https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop']; // Health
+      }
+      
+      if (searchQuery.toLowerCase().includes('education') || searchQuery.toLowerCase().includes('éducation')) {
+        return ['https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=400&fit=crop']; // Education
+      }
+      
+      if (searchQuery.toLowerCase().includes('finance') || searchQuery.toLowerCase().includes('money')) {
+        return ['https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&h=400&fit=crop']; // Finance
+      }
+      
+      if (searchQuery.toLowerCase().includes('security') || searchQuery.toLowerCase().includes('sécurité')) {
+        return ['https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=400&fit=crop']; // Security
       }
       
       // Images par défaut selon le type
@@ -1442,97 +1549,6 @@ class NotionMCPClient {
       };
     }
   }
-
-  async generateAndAddLongContent(args: any): Promise<MCPResponse> {
-    const { topic, length, style, context } = args;
-    const targetPageId = args.targetPageId || DEFAULT_NOTION_PAGE_ID;
-
-    try {
-      console.log(`✍️ Generating long-form content: "${topic}"`);
-
-      // 1. Call OpenAI API to generate the content
-      // NOTE: This requires OPENAI_API_KEY to be set in your environment
-      const openaiApiKey = process.env.OPENAI_API_KEY;
-      if (!openaiApiKey) {
-        throw new Error('OPENAI_API_KEY is not configured for content generation');
-      }
-
-      const generationPrompt = `
-        You are an expert writer. Your task is to write a piece of long-form content based on the following request.
-        Topic: "${topic}"
-        Approximate Length: ${length} lines
-        Writing Style: ${style}
-        User Context: "${context}"
-        
-        Please generate the content now.
-      `;
-
-      const openaiResponse = await fetch('https://api.openai.com/v1/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'text-davinci-003', // A powerful model for long-form content
-          prompt: generationPrompt,
-          max_tokens: length * 50, // Estimate tokens based on lines
-          temperature: 0.7,
-        }),
-      });
-
-      if (!openaiResponse.ok) {
-        const error = await openaiResponse.json();
-        throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
-      }
-
-      const openaiResult = await openaiResponse.json();
-      const generatedText = openaiResult.choices[0].text.trim();
-
-      // 2. Add the generated content to the Notion page
-      const newContent = [
-        {
-          "object": "block",
-          "type": "heading_2",
-          "heading_2": { "rich_text": [{ "type": "text", "text": { "content": `✍️ ${topic}` } }] }
-        },
-        {
-          "object": "block",
-          "type": "paragraph",
-          "paragraph": { "rich_text": [{ "type": "text", "text": { "content": generatedText } }] }
-        },
-        {
-          "object": "block",
-          "type": "paragraph",
-          "paragraph": { "rich_text": [{ "type": "text", "text": { "content": `Generated at ${new Date().toLocaleString()}` }, "annotations": { "italic": true, "color": "gray" } }] }
-        }
-      ];
-
-      await this.callNotionAPI(`/blocks/${targetPageId}/children`, 'PATCH', {
-        children: newContent
-      });
-
-      console.log(`✅ Successfully generated and added long-form content`);
-
-      return {
-        success: true,
-        data: {
-          action: 'LONG_CONTENT_ADDED',
-          topic,
-          length: generatedText.split('\n').length,
-          style,
-          timestamp: new Date().toISOString(),
-        },
-      };
-
-    } catch (error) {
-      console.error('❌ Error generating long-form content:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
 }
 
 // Instance du client MCP
@@ -1591,10 +1607,6 @@ export async function POST(request: NextRequest) {
         
       case 'addTableToPage':
         result = await mcpClient.addTableToPage(args);
-        break;
-        
-      case 'generateAndAddLongContent':
-        result = await mcpClient.generateAndAddLongContent(args);
         break;
         
       default:
