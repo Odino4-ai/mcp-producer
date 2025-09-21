@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 import { SessionStatus } from "@/app/types";
 
 interface BottomToolbarProps {
@@ -17,6 +17,7 @@ interface BottomToolbarProps {
   onCodecChange: (newCodec: string) => void;
   isTranscriptVisible: boolean;
   setIsTranscriptVisible: (val: boolean) => void;
+  isExpanded?: boolean;
 }
 
 function BottomToolbar({
@@ -35,6 +36,7 @@ function BottomToolbar({
   onCodecChange,
   isTranscriptVisible,
   setIsTranscriptVisible,
+  isExpanded = false,
 }: BottomToolbarProps) {
   const isConnected = sessionStatus === "CONNECTED";
   const isConnecting = sessionStatus === "CONNECTING";
@@ -63,6 +65,78 @@ function BottomToolbar({
     return `bg-primary text-primary-foreground hover:bg-primary/90 ${cursorClass} ${baseClasses}`;
   }
 
+  // Keyboard event handling for spacebar push-to-talk
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && isConnected && isPTTActive) {
+        e.preventDefault();
+        handleTalkButtonDown();
+      }
+    },
+    [isConnected, isPTTActive, handleTalkButtonDown]
+  );
+
+  const handleKeyUp = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.code === "Space" && isConnected && isPTTActive) {
+        e.preventDefault();
+        handleTalkButtonUp();
+      }
+    },
+    [isConnected, isPTTActive, handleTalkButtonUp]
+  );
+
+  useEffect(() => {
+    if (isExpanded) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
+      };
+    }
+  }, [isExpanded, handleKeyDown, handleKeyUp]);
+
+  // Render expanded version when isExpanded is true
+  if (isExpanded) {
+    return (
+      <div className="fixed bottom-12 right-12 z-50">
+        <div className="max-w-4xl mx-auto p-6 flex flex-col items-center gap-4">
+          {/* Main push-to-talk button */}
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onMouseDown={handleTalkButtonDown}
+              onMouseUp={handleTalkButtonUp}
+              onTouchStart={handleTalkButtonDown}
+              onTouchEnd={handleTalkButtonUp}
+              disabled={!isConnected || !isPTTActive}
+              className={`w-20 h-20 rounded-full transition-all duration-200 transform ${
+                !isConnected || !isPTTActive
+                  ? "bg-muted text-muted-foreground cursor-not-allowed scale-95"
+                  : isPTTUserSpeaking
+                  ? "bg-red-500 text-white shadow-lg scale-105 shadow-red-500/25"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 shadow-lg"
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <div className="text-2xl">🎤</div>
+              </div>
+            </button>
+
+            {/* Instructions */}
+            <div className="text-center">
+              <div className="text-sm font-medium text-foreground">
+                {isPTTUserSpeaking ? "Speaking..." : "Hold to Talk"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render normal toolbar
   return (
     <div className="p-4 flex flex-row items-center justify-center gap-x-8">
       <button
