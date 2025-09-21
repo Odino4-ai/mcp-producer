@@ -10,14 +10,16 @@ import "prismjs/themes/prism-tomorrow.css"; // for code syntax highlighting
 import "katex/dist/katex.min.css"; // for math equations
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Cross1Icon } from "@radix-ui/react-icons";
+import { Cross1Icon, EnterFullScreenIcon } from "@radix-ui/react-icons";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function NotionEmbed() {
   // Default Notion page URL if none provided
   const [recordMap, setRecordMap] = useState<ExtendedRecordMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Extract page ID from the URL you provided
   // const defaultPageId = "Development-Projects-274a860b701080368183ce1111e68d65";
@@ -62,13 +64,32 @@ function NotionEmbed() {
 
   return (
     <div
-      className={
-        "w-1/2 overflow-auto transition-all rounded-xl duration-200 ease-in-out flex-col bg-white"
-      }
+      className={cn(
+        isExpanded
+          ? "fixed inset-0 z-50"
+          : "w-1/2 overflow-auto transition-all rounded-xl duration-200 ease-in-out flex-col bg-white",
+        "bg-background"
+      )}
     >
-      <div className="absolute right-2 top-2">
-        <Cross1Icon className="w-4 h-4" />
-      </div>
+      {isExpanded ? (
+        <Button
+          size="icon"
+          variant="link"
+          onClick={() => setIsExpanded(false)}
+          className="absolute z-20 right-4 top-2"
+        >
+          <Cross1Icon />
+        </Button>
+      ) : (
+        <Button
+          size="icon"
+          variant="link"
+          onClick={() => setIsExpanded(true)}
+          className="absolute z-20 right-4 top-2"
+        >
+          <EnterFullScreenIcon />
+        </Button>
+      )}
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-auto">
           {loading && !recordMap && (
@@ -85,7 +106,7 @@ function NotionEmbed() {
             <NotionRenderer
               recordMap={recordMap}
               fullPage={false}
-              darkMode={false}
+              darkMode={true}
               disableHeader={false}
               className="notion-page"
               components={{
