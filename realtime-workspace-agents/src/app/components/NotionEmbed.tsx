@@ -11,11 +11,7 @@ import "katex/dist/katex.min.css"; // for math equations
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-export interface NotionEmbedProps {
-  isExpanded: boolean;
-}
-
-function NotionEmbed({ isExpanded }: NotionEmbedProps) {
+function NotionEmbed() {
   // Default Notion page URL if none provided
   const [recordMap, setRecordMap] = useState<ExtendedRecordMap | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,9 +26,6 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
   const notionPageId = pageId || defaultPageId;
 
   useEffect(() => {
-    let isMounted = true;
-    if (!isExpanded) return;
-
     const fetchNotionPage = async () => {
       setLoading(true);
       setError(null);
@@ -61,49 +54,42 @@ function NotionEmbed({ isExpanded }: NotionEmbedProps) {
     fetchNotionPage();
     const interval = setInterval(fetchNotionPage, 3000); // repeat every 3s
     return () => {
-      isMounted = false;
       clearInterval(interval); // cleanup
     };
-  }, [isExpanded, notionPageId]);
+  }, [notionPageId]);
 
   return (
     <div
       className={
-        (isExpanded ? "w-1/2 overflow-auto" : "w-0 overflow-hidden opacity-0") +
-        " transition-all rounded-xl duration-200 ease-in-out flex-col bg-white"
+        "w-1/2 overflow-auto transition-all rounded-xl duration-200 ease-in-out flex-col bg-white"
       }
     >
-      {isExpanded && (
-        <div className="h-full flex flex-col">
-          <div className="flex items-center justify-between px-6 py-3.5 sticky top-0 z-10 text-base border-b bg-white rounded-t-xl">
-            <span className="font-semibold">Development Projects</span>
-          </div>
-          <div className="flex-1 overflow-auto">
-            {loading && !recordMap && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-gray-500">Loading Notion page...</div>
-              </div>
-            )}
-            {error && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-red-500">{error}</div>
-              </div>
-            )}
-            {recordMap && !error && (
-              <NotionRenderer
-                recordMap={recordMap}
-                fullPage={false}
-                darkMode={false}
-                disableHeader={true}
-                className="notion-page"
-                components={{
-                  nextLink: Link,
-                }}
-              />
-            )}
-          </div>
+      <div className="h-full flex flex-col">
+        <div className="flex-1 overflow-auto">
+          {loading && !recordMap && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-gray-500">Loading Notion page...</div>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-red-500">{error}</div>
+            </div>
+          )}
+          {recordMap && !error && (
+            <NotionRenderer
+              recordMap={recordMap}
+              fullPage={false}
+              darkMode={false}
+              disableHeader={false}
+              className="notion-page"
+              components={{
+                nextLink: Link,
+              }}
+            />
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
