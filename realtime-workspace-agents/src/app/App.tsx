@@ -453,7 +453,7 @@ function App({ children }: { children: React.ReactNode }) {
         {/* Removed scenario & agent dropdowns for single-agent app */}
       </div>
 
-      <div className="flex flex-1 gap-2 px-2 overflow-hidden relative">
+      <div className="flex flex-1 gap-2 px-2 overflow-hidden py-0.5 relative">
         {/* Removed Workspace component (previously for other scenarios) */}
         <Transcript
           userText={userText}
