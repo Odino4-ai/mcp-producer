@@ -74,7 +74,7 @@ function NotionEmbed() {
       {isExpanded ? (
         <Button
           size="icon"
-          variant="link"
+          variant="secondary"
           onClick={() => setIsExpanded(false)}
           className="absolute z-20 right-4 top-2"
         >
@@ -83,7 +83,7 @@ function NotionEmbed() {
       ) : (
         <Button
           size="icon"
-          variant="link"
+          variant="secondary"
           onClick={() => setIsExpanded(true)}
           className="absolute z-20 right-4 top-2"
         >
