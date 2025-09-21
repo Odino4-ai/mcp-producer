@@ -589,19 +589,18 @@ class NotionMCPClient {
       
       // Pas de métadonnées dans le document final - garder propre
       
-      // Ajouter les images trouvées en premier
+      // Ajouter seulement la première image trouvée
       if (relevantImages && relevantImages.length > 0) {
-        relevantImages.forEach((imageUrl: string) => {
-          documentContent.push({
-            "object": "block",
-            "type": "image",
-            "image": {
-              "type": "external",
-              "external": {
-                "url": imageUrl
-              }
+        const imageUrl = relevantImages[0]; // Prendre seulement la première image
+        documentContent.push({
+          "object": "block",
+          "type": "image",
+          "image": {
+            "type": "external",
+            "external": {
+              "url": imageUrl
             }
-          });
+          }
         });
       }
       
