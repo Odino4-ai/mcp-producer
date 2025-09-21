@@ -10,12 +10,14 @@ import "prismjs/themes/prism-tomorrow.css"; // for code syntax highlighting
 import "katex/dist/katex.min.css"; // for math equations
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Cross1Icon } from "@radix-ui/react-icons";
 
 function NotionEmbed() {
   // Default Notion page URL if none provided
   const [recordMap, setRecordMap] = useState<ExtendedRecordMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Extract page ID from the URL you provided
   // const defaultPageId = "Development-Projects-274a860b701080368183ce1111e68d65";
@@ -64,6 +66,9 @@ function NotionEmbed() {
         "w-1/2 overflow-auto transition-all rounded-xl duration-200 ease-in-out flex-col bg-white"
       }
     >
+      <div className="absolute right-2 top-2">
+        <Cross1Icon className="w-4 h-4" />
+      </div>
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-auto">
           {loading && !recordMap && (
